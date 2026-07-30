@@ -1,0 +1,1616 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bound — study platform</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap');
+  /* ============================================================
+     THEME — clean, professional light UI with a lighter purple
+     accent used only for key features. Purple lightened a few
+     shades from the previous dark theme.
+     ============================================================ */
+  :root{
+    /* dark purple surfaces (1-2 shades lighter than original) */
+    --bg0:#1a1230;        /* page background — deep purple */
+    --bg1:#241a42;        /* card / panel         */
+    --bg2:#2b2050;        /* subtle raised        */
+    /* purple accents */
+    --violet:#8b6cf0;     /* primary accent       */
+    --violet-b:#a78bf5;   /* lighter accent       */
+    --violet-d:#7458d6;   /* deeper accent (hover)*/
+    --violet-soft:rgba(139,108,240,0.16);/* tinted fills */
+    --violet-softer:rgba(139,108,240,0.09);
+    /* text */
+    --ink:#f0edfa;        /* primary text         */
+    --ink2:#c4bce0;       /* secondary text       */
+    --mute:#9089ad;       /* muted text           */
+    --white:#f0edfa;      /* alias: default text  */
+    --lilac:#bda9f7;      /* accent text          */
+    --line:rgba(167,139,245,0.2);  /* borders     */
+    --line2:rgba(167,139,245,0.32);
+    --glow:rgba(139,108,240,0.4);
+    --good:#4fd6a5;--good-soft:rgba(79,214,165,0.16);
+    --warn:#f0b45f;--warn-soft:rgba(240,180,95,0.16);
+    --miss:#f0768d;--miss-soft:rgba(240,118,141,0.16);
+    --shadow:0 1px 2px rgba(0,0,0,0.2),0 6px 20px -8px rgba(0,0,0,0.4);
+    --shadow-lg:0 2px 6px rgba(0,0,0,0.25),0 16px 40px -14px rgba(0,0,0,0.5);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{-webkit-text-size-adjust:100%}
+  body{font-family:'Inter',system-ui,sans-serif;color:var(--ink);line-height:1.55;min-height:100vh;
+    background:var(--bg0)}
+  .wrap{max-width:880px;margin:0 auto;padding:0 1.15rem}
+  header.masthead{display:flex;align-items:center;justify-content:space-between;gap:1rem;padding:1.6rem 0 1.1rem;flex-wrap:wrap}
+  .brand{font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:clamp(1.7rem,5vw,2.3rem);letter-spacing:-0.02em;color:var(--ink)}
+  .brand .dot{color:var(--violet)}
+  .brand-sub{font-family:'JetBrains Mono',monospace;font-size:0.66rem;letter-spacing:0.16em;text-transform:uppercase;color:var(--mute);margin-top:0.3rem}
+  .whoami{font-family:'JetBrains Mono',monospace;font-size:0.74rem;color:var(--mute);text-align:right}
+  .whoami button{display:block;margin-top:0.3rem;margin-left:auto}
+  button{font-family:'Inter',sans-serif;font-weight:600;font-size:0.9rem;border:1px solid transparent;
+    background:var(--violet);color:#fff;padding:0.55rem 1.1rem;border-radius:10px;cursor:pointer;
+    transition:transform .08s,box-shadow .15s,background .15s;box-shadow:0 1px 2px rgba(33,29,51,0.08)}
+  button:hover{background:var(--violet-d);box-shadow:0 4px 14px -4px var(--glow)}
+  button:active{transform:translateY(1px)}
+  button.ghost{background:var(--bg2);border:1px solid var(--line2);color:var(--lilac);box-shadow:none}
+  button.ghost:hover{background:var(--violet-soft);border-color:var(--violet-b)}
+  button.small{font-size:0.78rem;padding:0.35rem 0.75rem;border-radius:8px}
+  button:disabled{opacity:0.45;cursor:not-allowed}
+  button:disabled:hover{background:var(--violet);box-shadow:none}
+  button:focus-visible{outline:2px solid var(--violet-b);outline-offset:2px}
+  .mode-switch{display:inline-flex;background:var(--bg1);border:1px solid var(--line);border-radius:12px;padding:4px;gap:4px;margin-bottom:1.1rem;box-shadow:var(--shadow)}
+  .mode-switch button{background:transparent;box-shadow:none;color:var(--mute);padding:0.4rem 1.1rem;font-size:0.85rem;border-radius:8px}
+  .mode-switch button:hover{background:var(--violet-soft);color:var(--lilac)}
+  .mode-switch button.active{background:var(--violet);color:#fff}
+  .mode-switch button.active:hover{background:var(--violet-d)}
+  nav.tabs{display:flex;gap:0.45rem;margin:0.4rem 0 1.2rem;flex-wrap:wrap}
+  nav.tabs .tab{font-family:'JetBrains Mono',monospace;font-size:0.76rem;letter-spacing:0.03em;padding:0.4rem 0.9rem;border:1px solid var(--line2);
+    background:var(--bg2);color:var(--ink2);border-radius:999px;cursor:pointer;transition:all .15s}
+  nav.tabs .tab:hover{border-color:var(--violet-b);color:var(--lilac)}
+  nav.tabs .tab.active{background:var(--violet);color:#fff;border-color:transparent}
+  nav.tabs .tab.disabled{opacity:0.5;cursor:not-allowed}
+  nav.tabs .tab.disabled:hover{border-color:var(--line2);color:var(--ink2)}
+  .panel{background:var(--bg1);border:1px solid var(--line);border-radius:16px;padding:1.4rem 1.5rem;margin-bottom:1.1rem;box-shadow:var(--shadow)}
+  .panel h2{font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:1.2rem;letter-spacing:-0.01em;color:var(--ink)}
+  .panel .meta{font-family:'JetBrains Mono',monospace;font-size:0.72rem;color:var(--mute);letter-spacing:0.02em;margin-top:0.2rem}
+
+  /* selectable topic tree */
+  .nav-group{margin-bottom:1rem}
+  .nav-group-head{display:flex;align-items:center;gap:0.6rem;font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:0.92rem;color:var(--ink);padding:0.35rem 0;letter-spacing:0.01em}
+  .nav-group-head .aos-select{font-family:'JetBrains Mono',monospace;font-size:0.62rem;text-transform:uppercase;letter-spacing:0.05em;color:var(--violet);border:1px solid var(--line2);border-radius:999px;padding:0.18rem 0.6rem;background:var(--bg2);cursor:pointer}
+  .nav-group-head .aos-select:hover{background:var(--violet-soft);border-color:var(--violet-b)}
+  .topic-chips{display:flex;flex-wrap:wrap;gap:0.45rem;margin:0.3rem 0 0.4rem}
+  .topic-chip{font-family:'JetBrains Mono',monospace;font-size:0.74rem;padding:0.42rem 0.8rem;border-radius:999px;border:1px solid var(--line2);
+    background:var(--bg2);color:var(--ink2);cursor:pointer;transition:all .13s;display:inline-flex;align-items:center;gap:0.45rem;user-select:none}
+  .topic-chip:hover{border-color:var(--violet-b);background:var(--violet-softer)}
+  .topic-chip.selected{background:var(--violet-soft);color:var(--lilac);border-color:var(--violet-b)}
+  .topic-chip .check{width:15px;height:15px;border-radius:5px;border:1.5px solid var(--line2);display:inline-flex;align-items:center;justify-content:center;font-size:0.62rem;background:var(--bg2)}
+  .topic-chip.selected .check{background:var(--violet);border-color:var(--violet);color:#fff}
+  .topic-chip .count{font-size:0.66rem;opacity:0.65}
+  .topic-chip .mastered-pip{width:6px;height:6px;border-radius:50%;background:var(--good)}
+
+  .start-bar{position:sticky;bottom:0.8rem;display:flex;align-items:center;gap:0.8rem;background:var(--bg1);
+    border:1px solid var(--line2);border-radius:14px;padding:0.75rem 1rem;margin:0.4rem 0 1.4rem;box-shadow:var(--shadow-lg);flex-wrap:wrap}
+  .start-bar .sel-count{font-family:'JetBrains Mono',monospace;font-size:0.8rem;color:var(--lilac)}
+  .start-bar .spacer{margin-left:auto}
+  .count-pills{display:flex;align-items:center;gap:0.4rem;flex-wrap:wrap;margin:0.2rem 0 0.4rem}
+  .count-pills .count-label{font-family:'JetBrains Mono',monospace;font-size:0.72rem;color:var(--mute);margin-right:0.2rem}
+  .count-pill{font-family:'JetBrains Mono',monospace;font-size:0.76rem;padding:0.32rem 0.75rem;border-radius:999px;border:1px solid var(--line2);background:var(--bg2);color:var(--ink2);box-shadow:none}
+  .count-pill:hover{border-color:var(--violet-b);background:var(--violet-soft);color:var(--lilac)}
+  .count-pill.active{background:var(--violet);color:#fff;border-color:transparent}
+  .count-pill.active:hover{background:var(--violet-d);color:#fff}
+  /* progress display */
+  .prog-today{display:flex;gap:0.8rem;flex-wrap:wrap;margin-bottom:1.1rem}
+  .prog-stat{flex:1;min-width:120px;background:var(--bg2);border:1px solid var(--line);border-radius:14px;padding:0.9rem 1rem}
+  .prog-stat .num{font-family:'Space Grotesk',sans-serif;font-size:1.9rem;font-weight:700;color:var(--violet-b);line-height:1}
+  .prog-stat .lbl{font-family:'JetBrains Mono',monospace;font-size:0.68rem;text-transform:uppercase;letter-spacing:0.05em;color:var(--mute);margin-top:0.35rem}
+  .prog-bars{margin-top:0.4rem}
+  .prog-day{display:flex;align-items:center;gap:0.7rem;margin-bottom:0.4rem}
+  .prog-day .day-lbl{font-family:'JetBrains Mono',monospace;font-size:0.72rem;color:var(--mute);width:64px;flex-shrink:0}
+  .prog-day .day-track{flex:1;height:18px;background:var(--bg2);border-radius:6px;overflow:hidden;border:1px solid var(--line)}
+  .prog-day .day-fill{height:100%;background:linear-gradient(90deg,var(--violet-d),var(--violet-b));border-radius:6px;min-width:2px}
+  .prog-day .day-num{font-family:'JetBrains Mono',monospace;font-size:0.72rem;color:var(--ink2);width:34px;text-align:right}
+  .prog-due{margin-top:1rem;font-family:'JetBrains Mono',monospace;font-size:0.78rem;color:var(--ink2)}
+  .prog-due b{color:var(--violet-b)}
+
+  /* ===== focused study screen ===== */
+  .study-screen{min-height:100vh;display:flex;flex-direction:column;padding-bottom:2rem}
+  .study-top{display:flex;align-items:center;gap:1rem;padding:1.2rem 0;flex-wrap:wrap}
+  .study-progress{font-family:'JetBrains Mono',monospace;font-size:0.78rem;color:var(--mute);margin-left:auto;display:flex;align-items:center;gap:0.7rem}
+  .study-clock{font-family:'JetBrains Mono',monospace;font-size:0.95rem;color:var(--ink)}
+  .prog-track{height:6px;background:var(--line);border-radius:999px;overflow:hidden;margin:0.2rem 0 1.5rem}
+  .prog-fill{height:100%;background:var(--violet);width:0%;transition:width .3s}
+
+  .study-card{flex:1;display:flex;flex-direction:column;justify-content:center;
+    background:var(--bg1);border:1px solid var(--line);border-radius:20px;padding:2.2rem 2rem;
+    box-shadow:var(--shadow-lg);min-height:340px}
+  .study-eyebrow{font-family:'JetBrains Mono',monospace;font-size:0.68rem;letter-spacing:0.06em;text-transform:uppercase;color:var(--violet);margin-bottom:1.2rem}
+  .study-card{position:relative}
+  .edit-btn{position:absolute;top:1rem;left:1rem;font-size:0.72rem;padding:0.28rem 0.7rem;background:var(--bg2);color:var(--lilac);border:1px solid var(--line2);box-shadow:none}
+  .edit-btn:hover{background:var(--violet-soft);border-color:var(--violet-b)}
+  .edit-panel{margin-top:1.2rem;padding-top:1.1rem;border-top:1px solid var(--line)}
+  /* ---------- notes ---------- */
+  .notes-head{display:flex;align-items:flex-start;gap:1rem;flex-wrap:wrap;margin-bottom:1rem}
+  .notes-head h2{font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:1.5rem;color:var(--ink)}
+  .notes-modes{margin-left:auto;display:inline-flex;background:var(--bg1);border:1px solid var(--line);border-radius:10px;padding:3px;gap:3px}
+  .mode-pill{background:transparent;color:var(--mute);box-shadow:none;font-size:0.8rem;padding:0.35rem 0.9rem;border-radius:8px}
+  .mode-pill:hover{background:var(--violet-soft);color:var(--lilac)}
+  .mode-pill.active{background:var(--violet);color:#fff}
+  .note-sec{background:var(--bg1);border:1px solid var(--line);border-radius:16px;padding:1.3rem 1.5rem;margin-bottom:1.1rem;box-shadow:var(--shadow)}
+  .note-dp{font-family:'JetBrains Mono',monospace;font-size:0.74rem;letter-spacing:0.03em;color:var(--violet-b);line-height:1.6;
+    padding-bottom:0.7rem;margin-bottom:1rem;border-bottom:1px solid var(--line)}
+  .note-dp::before{content:"● ";opacity:0.7}
+  .note-body{font-size:1rem;line-height:1.75;color:var(--ink2)}
+  .note-body h4{font-family:'Space Grotesk',sans-serif;font-size:1.02rem;font-weight:600;color:var(--lilac);margin:1.1rem 0 0.4rem}
+  .note-body h4:first-child{margin-top:0}
+  .note-body p{margin:0.45rem 0}
+  .note-body ul{margin:0.2rem 0 0.5rem;padding-left:1.3rem;list-style:none}
+  .note-body ul.lvl1>li::before{content:"●";color:var(--violet);font-size:0.7em;position:absolute;margin-left:-1.1rem;top:0.45em}
+  .note-body ul.lvl2>li::before{content:"○";color:var(--violet-b);font-size:0.7em;position:absolute;margin-left:-1.1rem;top:0.45em}
+  .note-body ul.lvl3>li::before{content:"▪";color:var(--mute);font-size:0.7em;position:absolute;margin-left:-1.1rem;top:0.45em}
+  .note-body li{position:relative;margin:0.22rem 0}
+  .note-body ul ul{margin-left:0.35rem}
+  .note-body strong{color:var(--ink);font-weight:600}
+  .note-body .note-warn,.note-body p.note-warn{background:var(--warn-soft);border-left:3px solid var(--warn);border-radius:0 8px 8px 0;padding:0.5rem 0.8rem;color:var(--warn);font-size:0.92rem}
+  .note-body h4.note-warn{background:var(--warn-soft);border-left:3px solid var(--warn);border-radius:0 8px 8px 0;padding:0.5rem 0.8rem;color:var(--warn)}
+  /* editing */
+  .note-body[contenteditable="true"]{outline:none;border:1px dashed var(--violet-b);border-radius:10px;padding:0.8rem;background:var(--bg2)}
+  .note-toolbar{display:none;flex-wrap:wrap;gap:0.3rem;margin-bottom:0.7rem;padding:0.5rem;background:var(--bg2);border:1px solid var(--line2);border-radius:10px}
+  .editing .note-toolbar{display:flex}
+  .note-toolbar button{background:var(--bg1);color:var(--ink2);border:1px solid var(--line2);box-shadow:none;font-size:0.78rem;padding:0.3rem 0.6rem;border-radius:7px;min-width:32px}
+  .note-toolbar button:hover{background:var(--violet-soft);color:var(--lilac);border-color:var(--violet-b)}
+  .note-toolbar .sep{width:1px;background:var(--line2);margin:0 0.25rem}
+  .note-toolbar select{background:var(--bg1);color:var(--ink2);border:1px solid var(--line2);border-radius:7px;font-size:0.78rem;padding:0.3rem 0.4rem}
+  .note-save{margin-top:0.8rem;display:none;gap:0.5rem}
+  .editing .note-save{display:flex}
+  .note-saved{font-family:'JetBrains Mono',monospace;font-size:0.74rem;color:var(--good);align-self:center}
+  /* related cards inside a note section */
+  .note-cards{margin-top:1.3rem;padding-top:1rem;border-top:1px dashed var(--line2)}
+  .note-cards-head{display:flex;align-items:center;gap:0.6rem;cursor:pointer;font-family:'JetBrains Mono',monospace;font-size:0.74rem;text-transform:uppercase;letter-spacing:0.05em;color:var(--mute)}
+  .note-cards-head:hover{color:var(--lilac)}
+  .note-cards-head .chev{transition:transform .15s}
+  .note-cards.open .chev{transform:rotate(90deg)}
+  .note-cards-body{display:none;margin-top:0.8rem}
+  .note-cards.open .note-cards-body{display:block}
+  .nc-empty{font-size:0.85rem;color:var(--mute);padding:0.5rem 0}
+  /* dot point number */
+  .dp-num{display:inline-flex;align-items:center;justify-content:center;min-width:22px;height:22px;border-radius:6px;
+    background:var(--violet);color:#fff;font-weight:700;font-size:0.76rem;margin-right:0.55rem;vertical-align:middle}
+  .note-dp::before{content:none}
+  /* bulk linking */
+  .link-help{font-size:0.84rem;color:var(--mute);margin-bottom:0.7rem}
+  .link-bar{display:flex;align-items:center;gap:0.45rem;flex-wrap:wrap;background:var(--bg2);border:1px solid var(--line2);
+    border-radius:12px;padding:0.6rem 0.8rem;margin-bottom:0.9rem;position:sticky;top:0.5rem;z-index:5}
+  .link-count{font-family:'JetBrains Mono',monospace;font-size:0.78rem;color:var(--lilac);min-width:78px}
+  .link-sep{width:1px;height:20px;background:var(--line2);margin:0 0.3rem}
+  .link-to{font-family:'JetBrains Mono',monospace;font-size:0.74rem;color:var(--mute)}
+  .link-chips{display:flex;gap:0.3rem;flex-wrap:wrap}
+  .link-chip{min-width:30px;padding:0.3rem 0.5rem;font-family:'JetBrains Mono',monospace;font-size:0.8rem;font-weight:600;
+    background:var(--bg1);color:var(--lilac);border:1px solid var(--line2);border-radius:8px;box-shadow:none}
+  .link-chip:hover:not(:disabled){background:var(--violet);color:#fff;border-color:transparent}
+  .link-chip:disabled{opacity:0.35;cursor:not-allowed}
+  .lib-card.selectable{display:flex;gap:0.7rem;align-items:flex-start;cursor:pointer;transition:all .12s}
+  .lib-card.selectable:hover{border-color:var(--violet-b)}
+  .lib-card.selectable .c-main{flex:1;min-width:0}
+  .lib-card .c-pick{width:20px;height:20px;flex-shrink:0;border:1.5px solid var(--line2);border-radius:6px;background:var(--bg1);
+    display:flex;align-items:center;justify-content:center;font-size:0.7rem;color:#fff;margin-top:0.15rem}
+  .lib-card.sel{border-color:var(--violet);background:var(--violet-softer)}
+  .lib-card.sel .c-pick{background:var(--violet);border-color:var(--violet)}
+  /* add card button */
+  .nc-addwrap{margin-top:0.7rem}
+  .nc-open{font-size:0.8rem;padding:0.4rem 0.9rem}
+  .nc-addwrap.open .nc-open{display:none}
+  .nc-form{display:none;margin-top:0.2rem}
+  .nc-addwrap.open .nc-form{display:block}
+  /* card library */
+  .lib-topic{display:flex;align-items:center;gap:0.6rem;padding:0.7rem 0.9rem;border:1px solid var(--line2);border-radius:12px;background:var(--bg2);margin-bottom:0.45rem;cursor:pointer;transition:all .13s}
+  .lib-topic:hover{border-color:var(--violet-b);background:var(--violet-softer)}
+  .lib-topic .t-name{flex:1;font-size:0.95rem;color:var(--ink)}
+  .lib-topic .t-count{font-family:'JetBrains Mono',monospace;font-size:0.72rem;color:var(--mute)}
+  .lib-card{border:1px solid var(--line);border-radius:12px;background:var(--bg2);padding:0.85rem 1rem;margin-bottom:0.6rem}
+  .lib-card .c-text{font-size:0.95rem;line-height:1.6;color:var(--ink);white-space:pre-wrap;margin-bottom:0.6rem}
+  .lib-card .c-text .bl{background:var(--violet-soft);color:var(--lilac);border-radius:4px;padding:0 0.3rem;font-family:'JetBrains Mono',monospace;font-size:0.88rem}
+  .lib-card .c-actions{display:flex;gap:0.4rem;align-items:center}
+  .lib-card textarea{width:100%;font-family:'Inter',sans-serif;font-size:0.92rem;padding:0.6rem;border:1px solid var(--line2);border-radius:10px;background:var(--bg1);color:var(--ink);margin-bottom:0.5rem}
+  .lib-card .c-box{font-family:'JetBrains Mono',monospace;font-size:0.68rem;color:var(--mute);margin-left:auto}
+  /* English typing tool */
+  .type-display{font-family:'JetBrains Mono',monospace;font-size:1.35rem;line-height:2;color:var(--mute);letter-spacing:0.01em;user-select:none;margin-bottom:1rem}
+  .type-display .ch{position:relative}
+  .type-display .ch.correct{color:var(--good)}
+  .type-display .ch.wrong{color:var(--miss);background:var(--miss-soft);border-radius:3px}
+  .type-display .ch.current{border-left:2px solid var(--violet);animation:blink 1s step-end infinite;margin-left:-2px}
+  @keyframes blink{50%{border-color:transparent}}
+  .type-input{position:absolute;left:-9999px;opacity:0}
+  .passage-item{display:flex;align-items:center;gap:0.6rem;padding:0.7rem 0.9rem;border:1px solid var(--line2);border-radius:12px;background:var(--bg2);margin-bottom:0.5rem;cursor:pointer;transition:all .13s}
+  .passage-item:hover{border-color:var(--violet-b);background:var(--violet-softer)}
+  .passage-item .p-label{font-family:'JetBrains Mono',monospace;font-size:0.72rem;color:var(--violet-b);flex-shrink:0}
+  .passage-item .p-text{color:var(--ink2);font-size:0.9rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1}
+  .passage-item .p-del{font-size:0.7rem;padding:0.2rem 0.5rem;background:transparent;border:1px solid var(--line2);color:var(--miss);box-shadow:none}
+  .passage-item .p-del:hover{background:var(--miss-soft)}
+  .type-results{margin-top:1.4rem;padding-top:1.2rem;border-top:1px solid var(--line);text-align:center}
+  .type-results .big-stat{font-family:'Space Grotesk',sans-serif;font-size:2.2rem;font-weight:700;color:var(--violet-b)}
+  .type-results .sub{font-family:'JetBrains Mono',monospace;font-size:0.8rem;color:var(--mute);margin-top:0.3rem}
+  .type-results button{margin-top:1rem}
+  /* word game */
+  .game-field{position:relative;height:70vh;min-height:420px;border:1px solid var(--line);border-radius:20px;background:var(--bg1);overflow:hidden;box-shadow:var(--shadow)}
+  .falling-word{position:absolute;font-family:'Space Grotesk',sans-serif;font-size:1.3rem;font-weight:600;color:var(--ink);padding:0.3rem 0.7rem;background:var(--violet-softer);border:1px solid var(--line2);border-radius:10px;white-space:nowrap;transform:translateX(-50%)}
+  .falling-word .done-part{color:var(--good)}
+  .falling-word.active{border-color:var(--violet);box-shadow:0 0 0 2px var(--violet-soft)}
+  .game-input{position:absolute;bottom:1rem;left:50%;transform:translateX(-50%);width:70%;max-width:400px;font-family:'JetBrains Mono',monospace;font-size:1.1rem;text-align:center;padding:0.6rem 1rem;border:1px solid var(--violet-b);border-radius:12px;background:var(--bg2);color:var(--ink);z-index:5}
+  .game-input:focus{outline:none;box-shadow:0 0 0 3px var(--violet-soft)}
+  #gameLives{font-size:0.95rem}
+  #gameScore{font-family:'Space Grotesk',sans-serif;font-weight:700;color:var(--violet-b);font-size:1.1rem}
+  .recall-timer{font-family:'Space Grotesk',sans-serif;font-size:2.5rem;font-weight:700;color:var(--violet-b);text-align:center;margin-bottom:0.6rem}
+  .recall-timer.low{color:var(--miss)}
+  .recall-found{display:flex;flex-wrap:wrap;gap:0.4rem;justify-content:center;margin-top:0.6rem}
+  .recall-found .recall-hit{font-family:'JetBrains Mono',monospace;font-size:0.82rem;background:var(--good-soft);color:var(--good);border:1px solid rgba(79,214,165,0.3);border-radius:999px;padding:0.2rem 0.6rem}
+  @keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+  .shake{animation:shake .25s}
+  .wl-item{display:flex;align-items:center;gap:0.6rem;padding:0.7rem 0.9rem;border:1px solid var(--line2);border-radius:12px;background:var(--bg2);margin-bottom:0.5rem;cursor:pointer;transition:all .13s}
+  .wl-item:hover{border-color:var(--violet-b);background:var(--violet-softer)}
+  .wl-item .wl-name{font-family:'Space Grotesk',sans-serif;font-weight:600;color:var(--ink);flex-shrink:0}
+  .wl-item .wl-count{font-family:'JetBrains Mono',monospace;font-size:0.72rem;color:var(--mute);flex:1}
+  .wl-item .wl-del{font-size:0.7rem;padding:0.2rem 0.5rem;background:transparent;border:1px solid var(--line2);color:var(--miss);box-shadow:none}
+  .recall-hit{color:var(--good)}
+  .recall-miss{color:var(--mute)}
+  .delete-confirm{margin-top:1rem;text-align:center;font-family:'JetBrains Mono',monospace;font-size:0.8rem;color:var(--miss);background:var(--miss-soft);border:1px solid var(--miss);border-radius:10px;padding:0.6rem}
+  .cloze-text{font-size:1.2rem;line-height:1.7;color:var(--ink);white-space:pre-wrap}
+  .cloze-text b{color:var(--lilac);font-weight:600}
+  .blank-input{display:inline-block;font-family:'JetBrains Mono',monospace;font-size:1.05rem;color:var(--ink);background:var(--violet-softer);
+    border:none;border-bottom:2px solid var(--violet-b);border-radius:6px 6px 0 0;padding:0.15rem 0.6rem;margin:0 0.2rem;min-width:90px;text-align:center;transition:all .15s}
+  .blank-input:focus{outline:none;background:var(--violet-soft);border-bottom-color:var(--violet)}
+  .blank-input.correct{background:var(--good-soft);border-bottom-color:var(--good);color:var(--good)}
+  .blank-input.wrong{background:var(--miss-soft);border-bottom-color:var(--miss);color:var(--miss)}
+  .answer-reveal{margin-top:1.5rem;padding-top:1.2rem;border-top:1px solid var(--line)}
+  .answer-reveal .lbl{font-family:'JetBrains Mono',monospace;font-size:0.68rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--mute);margin-bottom:0.5rem}
+  .answer-list{display:flex;flex-wrap:wrap;gap:0.5rem}
+  .answer-pill{font-family:'JetBrains Mono',monospace;font-size:0.95rem;background:var(--good-soft);color:var(--good);border:1px solid rgba(47,174,134,0.3);border-radius:999px;padding:0.3rem 0.85rem}
+
+  .fc-face{font-family:'Space Grotesk',sans-serif;font-size:1.35rem;line-height:1.5;color:var(--ink);text-align:center;width:100%}
+  .fc-face b{color:var(--lilac)}
+  .fc-side{font-family:'JetBrains Mono',monospace;font-size:0.66rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--violet);text-align:center;margin-bottom:1rem}
+
+  .mark-row{display:flex;gap:0.7rem;justify-content:center;margin-top:1.7rem;flex-wrap:wrap}
+  .mark-row button{min-width:140px}
+  .mark-right{background:var(--good)}
+  .mark-right:hover{background:#279974}
+  .mark-wrong{background:var(--miss)}
+  .mark-wrong:hover{background:#cb4560}
+  .kbd-hint{text-align:center;margin-top:1.1rem;font-family:'JetBrains Mono',monospace;font-size:0.72rem;color:var(--mute)}
+  .kbd{display:inline-block;background:var(--bg2);border:1px solid var(--line2);border-radius:6px;padding:0.05rem 0.45rem;color:var(--lilac);margin:0 0.15rem;box-shadow:0 1px 0 var(--line2)}
+
+  .box-pips{display:inline-flex;align-items:center;gap:3px;margin-left:0.3rem}
+  .box-pips .lbl{font-family:'JetBrains Mono',monospace;font-size:0.66rem;color:var(--mute);margin-right:3px;letter-spacing:0.06em}
+  .pip{width:8px;height:8px;border-radius:50%;background:var(--line2)}
+  .pip.on{background:var(--warn)}
+  .pip.on.mastered{background:var(--good)}
+
+  .add-form{margin-top:0.6rem}
+  .add-form textarea,.add-form input,.auth input{width:100%;font-family:'Inter',sans-serif;font-size:0.92rem;padding:0.65rem 0.8rem;
+    border:1px solid var(--line2);border-radius:10px;background:var(--bg2);color:var(--ink);margin-bottom:0.6rem;resize:vertical}
+  .add-form textarea::placeholder,.add-form input::placeholder,.auth input::placeholder{color:var(--mute)}
+  .add-form textarea:focus,.add-form input:focus,.auth input:focus{outline:none;border-color:var(--violet);box-shadow:0 0 0 3px var(--violet-soft)}
+  .add-form label{font-family:'JetBrains Mono',monospace;font-size:0.7rem;letter-spacing:0.04em;text-transform:uppercase;color:var(--mute);display:block;margin-bottom:0.25rem}
+  .auth-screen{max-width:400px;margin:4rem auto;background:var(--bg1);border:1px solid var(--line);border-radius:20px;padding:2.2rem 2rem;box-shadow:var(--shadow-lg)}
+  .auth-screen h1{font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:2.1rem;color:var(--ink)}
+  .auth-screen .lede{font-size:0.9rem;color:var(--mute);margin:0.3rem 0 1.3rem}
+  .auth .row{display:flex;gap:0.5rem;margin-top:0.3rem}
+  .auth .row button{flex:1}
+  .auth .msg{font-family:'JetBrains Mono',monospace;font-size:0.76rem;margin-top:0.9rem;padding:0.55rem 0.7rem;border-radius:10px;display:none}
+  .auth .msg.show{display:block}
+  .auth .msg.err{background:var(--miss-soft);color:var(--miss)}
+  .auth .msg.ok{background:var(--good-soft);color:var(--good)}
+  .empty{text-align:center;padding:2.2rem 1rem;color:var(--mute)}
+  .empty .big{font-family:'Space Grotesk',sans-serif;font-size:1.25rem;color:var(--ink);margin-bottom:0.3rem}
+  .hidden{display:none!important}
+  .banner{background:var(--warn-soft);border:1px solid rgba(224,149,47,0.3);border-radius:12px;padding:0.75rem 0.95rem;font-size:0.82rem;color:var(--ink2);margin-bottom:1.1rem;font-family:'JetBrains Mono',monospace}
+  .banner code{color:var(--warn)}
+  .session-done{text-align:center;padding:2.5rem 1rem}
+  .session-done .big{font-family:'Space Grotesk',sans-serif;font-size:1.7rem;color:var(--ink);margin-bottom:0.5rem}
+  .session-done .stats{font-family:'JetBrains Mono',monospace;color:var(--mute);margin-bottom:1.5rem}
+  footer{text-align:center;font-family:'JetBrains Mono',monospace;font-size:0.68rem;color:var(--mute);padding:2rem 0 1.6rem;letter-spacing:0.04em}
+  @media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+<script src="config.js"></script>
+<div class="wrap">
+
+  <!-- AUTH -->
+  <div id="authScreen" class="auth-screen hidden">
+    <h1>Bound<span style="color:var(--violet)">.</span></h1>
+    <p class="lede">Your revision, in one place. Sign in to open your notebook.</p>
+    <div class="auth">
+      <input id="email" type="email" placeholder="email" autocomplete="username">
+      <input id="password" type="password" placeholder="password" autocomplete="current-password">
+      <div class="row"><button id="signInBtn">Sign in</button><button id="signUpBtn" class="ghost">Create account</button></div>
+      <div id="authMsg" class="msg"></div>
+    </div>
+  </div>
+
+  <!-- PICKER (home) -->
+  <div id="home" class="hidden">
+    <header class="masthead">
+      <div><div class="brand">Bound<span class="dot">.</span></div><div class="brand-sub">VCE revision · one notebook</div></div>
+      <div class="whoami"><span id="userEmail"></span><button class="ghost small" id="signOutBtn">Sign out</button></div>
+    </header>
+    <nav class="tabs" id="tabs">
+      <div class="tab active" data-subject="Chemistry">Chemistry</div>
+      <div class="tab" data-subject="Algorithmics">Algorithmics</div>
+      <div class="tab" data-subject="English">English</div>
+    </nav>
+    <div id="configWarn" class="banner hidden">Config not set. Open <code>config.js</code> and paste your Supabase <code>Project URL</code> and <code>anon key</code> into it.</div>
+
+    <div class="mode-switch" id="modeSwitch">
+      <button class="active" data-mode="cloze">Fill in the blanks</button>
+      <button data-mode="mc" disabled title="coming soon">Multiple choice · soon</button>
+    </div>
+
+    <div id="clozeHome">
+    <div class="panel">
+      <h2>Choose what to study</h2>
+      <div class="meta">Tap topics to select — pick one, several, or a whole area of study. Then start.</div>
+      <div id="navTree" style="margin-top:1rem;"></div>
+    </div>
+
+    <div class="count-pills" id="countPills">
+      <span class="count-label">How many:</span>
+      <button class="count-pill active" data-count="all">All</button>
+      <button class="count-pill" data-count="5">5</button>
+      <button class="count-pill" data-count="10">10</button>
+      <button class="count-pill" data-count="15">15</button>
+      <button class="count-pill" data-count="20">20</button>
+    </div>
+
+    <div class="start-bar" id="startBar">
+      <span class="sel-count" id="selCount">0 selected</span>
+      <button class="ghost small" id="clearSel">Clear</button>
+      <div class="spacer"></div>
+      <button class="ghost" id="notesBtn">Notes</button>
+      <button class="ghost" id="libraryBtn">Edit cards</button>
+      <button id="startBtn" disabled>Start studying →</button>
+    </div>
+    </div>
+
+    <div id="englishHome" class="hidden">
+      <div id="engGame">
+      <div class="panel">
+        <h2>Word game</h2>
+        <div class="meta">Words fall from the top — type each one before it hits the bottom. 3 lives, then a 30-second recall round.</div>
+        <div id="wordlistList" style="margin-top:1rem;"></div>
+      </div>
+      <div class="panel">
+        <h2>Add a word list</h2>
+        <div class="meta">e.g. tone words. Separate words with commas or new lines.</div>
+        <div class="add-form">
+          <label>List name</label>
+          <input id="wlName" placeholder="e.g. Tone words">
+          <label>Words</label>
+          <textarea id="wlWords" rows="4" placeholder="wistful, sardonic, elegiac, defiant ..."></textarea>
+          <button id="addWlBtn">Add word list</button>
+          <span id="wlMsg" style="font-family:'JetBrains Mono',monospace;font-size:0.76rem;margin-left:0.6rem;color:var(--good)"></span>
+        </div>
+      </div>
+      </div>
+    </div>
+
+    <div class="panel" id="progressPanel">
+      <h2>Your progress</h2>
+      <div class="meta" id="progressMeta">Reviews you've done — today and recently</div>
+      <div id="progressBody" style="margin-top:1rem;"></div>
+    </div>
+
+    <footer>Bound · your data, your notebook · synced &amp; private</footer>
+  </div>
+
+  <!-- NOTES -->
+  <div id="notes" class="hidden">
+    <div class="study-top">
+      <button class="ghost small" id="notesExit">← Back</button>
+      <div class="study-progress"><span id="notesCrumb"></span></div>
+    </div>
+
+    <div id="notesBrowse">
+      <div class="panel">
+        <h2>Notes</h2>
+        <div class="meta">Pick a topic to read its notes, organised by dot point.</div>
+        <div id="notesTree" style="margin-top:1rem;"></div>
+      </div>
+    </div>
+
+    <div id="notesTopic" class="hidden">
+      <div class="notes-head">
+        <div>
+          <h2 id="notesTopicName"></h2>
+          <div class="meta" id="notesTopicMeta"></div>
+        </div>
+        <div class="notes-modes">
+          <button class="mode-pill active" id="modeRead">Read</button>
+          <button class="mode-pill" id="modeEdit">Edit</button>
+        </div>
+      </div>
+      <div id="notesSections"></div>
+    </div>
+  </div>
+
+  <!-- CARD LIBRARY -->
+  <div id="library" class="hidden">
+    <div class="study-top">
+      <button class="ghost small" id="libExit">← Back</button>
+      <div class="study-progress"><span id="libCrumb"></span></div>
+    </div>
+
+    <!-- topic browser -->
+    <div id="libBrowse">
+      <div class="panel">
+        <h2>Edit cards</h2>
+        <div class="meta">Pick a topic to view, edit, or add cards.</div>
+        <div id="libTree" style="margin-top:1rem;"></div>
+      </div>
+    </div>
+
+    <!-- cards within a topic -->
+    <div id="libTopic" class="hidden">
+      <div class="panel">
+        <h2 id="libTopicName"></h2>
+        <div class="meta" id="libTopicMeta"></div>
+        <div id="libCards" style="margin-top:1rem;"></div>
+      </div>
+      <div class="panel">
+        <h2>Add a card to this topic</h2>
+        <div class="meta">Unit, area of study and topic are set from where you are.</div>
+        <div class="add-form">
+          <label>Sentence — mark blanks with [[double brackets]]</label>
+          <textarea id="libNewText" rows="3" placeholder="e.g. Oxidation occurs at the [[anode]]."></textarea>
+          <button id="libAddBtn">Add card</button>
+          <span id="libAddMsg" style="font-family:'JetBrains Mono',monospace;font-size:0.76rem;margin-left:0.6rem;color:var(--good)"></span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- WORD GAME SCREEN -->
+  <div id="game" class="hidden">
+    <div class="study-top">
+      <button class="ghost small" id="gameExit">← Exit</button>
+      <div class="study-progress">
+        <span id="gameLives">❤️❤️❤️</span>
+        <span id="gameScore">0</span>
+      </div>
+    </div>
+    <div class="game-field" id="gameField">
+      <input id="gameInput" class="game-input" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="type here…">
+    </div>
+    <!-- recall stage -->
+    <div id="recallStage" class="hidden">
+      <div class="study-card">
+        <div class="study-eyebrow">Stage 2 · Active recall</div>
+        <div id="recallTimer" class="recall-timer">0:30</div>
+        <div class="meta" style="text-align:center;margin-bottom:0.8rem">Type a word from the list and press Enter. Any word in the list counts.</div>
+        <input id="recallInput" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="type a word, press Enter" style="width:100%;font-family:'Inter',sans-serif;font-size:1.1rem;text-align:center;padding:0.8rem;border:1px solid var(--line2);border-radius:12px;background:var(--bg2);color:var(--ink)">
+        <div id="recallCount" style="text-align:center;font-family:'JetBrains Mono',monospace;font-size:0.8rem;color:var(--mute);margin-top:0.8rem"></div>
+        <div id="recallFound" class="recall-found"></div>
+        <div class="mark-row"><button id="recallDone">Finish now</button></div>
+      </div>
+    </div>
+    <!-- game over / results -->
+    <div id="gameResults" class="hidden">
+      <div class="study-card">
+        <div id="gameResultsBody"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- STUDY SCREEN -->
+  <div id="study" class="study-screen hidden">
+    <div class="study-top">
+      <button class="ghost small exit" id="exitStudy">← Exit</button>
+      <div class="study-progress">
+        <span class="study-clock" id="studyClock">00:00</span>
+        <span id="studyCount">0 / 0</span>
+      </div>
+    </div>
+    <div class="prog-track"><div class="prog-fill" id="progFill"></div></div>
+
+    <div class="study-card" id="studyCard">
+      <button class="edit-btn" id="editBtn">Edit</button>
+      <div class="study-eyebrow" id="studyEyebrow"></div>
+      <div id="studyBody"></div>
+      <div class="answer-reveal hidden" id="answerReveal">
+        <div class="lbl">Answer</div>
+        <div class="answer-list" id="answerList"></div>
+      </div>
+      <div class="mark-row hidden" id="markRow">
+        <button class="mark-right" id="markRight">Got it ✓</button>
+        <button class="mark-wrong" id="markWrong">Missed it ✗</button>
+      </div>
+      <div class="kbd-hint" id="kbdHint"></div>
+
+      <div class="delete-confirm hidden" id="deleteConfirm">
+        Delete this card? <span class="kbd">Enter</span> to confirm · <span class="kbd">Esc</span> to cancel
+      </div>
+
+      <div class="edit-panel hidden" id="editPanel">
+        <div class="lbl" style="font-family:'JetBrains Mono',monospace;font-size:0.7rem;text-transform:uppercase;color:var(--mute);margin-bottom:0.4rem">Edit question</div>
+        <textarea id="editText" rows="3" style="width:100%;font-family:'Inter',sans-serif;font-size:0.92rem;padding:0.6rem;border:1px solid var(--line2);border-radius:10px;background:var(--bg2);color:var(--ink);margin-bottom:0.5rem"></textarea>
+        <div style="display:flex;gap:0.5rem;flex-wrap:wrap">
+          <button id="editSave">Save</button>
+          <button class="ghost" id="editCancel">Cancel</button>
+          <button class="mark-wrong" id="editDelete" style="margin-left:auto">Delete</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- done -->
+    <div class="session-done hidden" id="sessionDone">
+      <div class="big">Session complete 🎉</div>
+      <div class="stats" id="doneStats"></div>
+      <button id="doneBtn">Back to topics</button>
+    </div>
+  </div>
+
+</div>
+
+<script>
+/* ================= Bound ================= */
+let db=null, currentSubject="Chemistry", mode="cloze";
+let allRows={cloze:[],cards:[]};       // everything for the subject
+let selected=new Set();                // selected "unit||aos||topic" keys
+let queue=[], qi=0;                     // study queue + index
+let sessionLimit="all";                 // how many questions this session
+let sessionStats={right:0,wrong:0,total:0};
+let phase="input";                     // input -> reveal -> mark  (cloze) ; question -> answer/mark (cards)
+let markArmed=false;                    // true only after a keyup, so the same Enter that
+                                        // submits can't also mark on the same press
+let pendingDelete=false;                // Ctrl+D shows confirm; Enter confirms, Esc cancels
+let hasDueColumn=true;                  // set false if the DB has no 'due' column yet
+let hasDpColumn=true;                   // set false if the DB has no 'dp' column yet
+let currentAnswers=[];                 // cloze answers for current card
+let clockT=null, clockS=0;
+
+const $=(id)=>document.getElementById(id);
+const keyOf=(r)=>`${r.unit||"Other"}||${r.aos||""}||${r.topic||"General"}`;
+
+function boot(){
+  const url=(typeof SUPABASE_URL!=="undefined")?SUPABASE_URL:"";
+  const anon=(typeof SUPABASE_ANON!=="undefined")?SUPABASE_ANON:"";
+  if(!url||url.startsWith("PASTE")||!anon||anon.startsWith("PASTE")){
+    $("home").classList.remove("hidden");$("configWarn").classList.remove("hidden");return;
+  }
+  db=window.supabase.createClient(url,anon);
+  wireAuth();wireHome();wireStudyKeys();
+  db.auth.getSession().then(({data})=>{data.session?enterApp(data.session.user):showAuth();});
+  db.auth.onAuthStateChange((_e,s)=>{s?enterApp(s.user):showAuth();});
+}
+function showAuth(){$("authScreen").classList.remove("hidden");$("home").classList.add("hidden");$("study").classList.add("hidden");}
+function enterApp(u){$("authScreen").classList.add("hidden");$("home").classList.remove("hidden");$("userEmail").textContent=u.email;loadAll();}
+function authMsg(t,k){const e=$("authMsg");e.textContent=t;e.className="msg show "+(k||"");}
+
+function wireAuth(){
+  $("signInBtn").onclick=async()=>{const email=$("email").value.trim(),password=$("password").value;
+    if(!email||!password)return authMsg("Enter your email and password.","err");
+    const{error}=await db.auth.signInWithPassword({email,password});if(error)authMsg(error.message,"err");};
+  $("signUpBtn").onclick=async()=>{const email=$("email").value.trim(),password=$("password").value;
+    if(!email||!password)return authMsg("Enter an email and password.","err");
+    if(password.length<6)return authMsg("Use at least 6 characters.","err");
+    const{error}=await db.auth.signUp({email,password});error?authMsg(error.message,"err"):authMsg("Account created. If confirmation is on, check your inbox — else sign in.","ok");};
+  $("password").addEventListener("keydown",e=>{if(e.key==="Enter")$("signInBtn").click();});
+}
+
+function wireHome(){
+  $("signOutBtn").onclick=()=>db.auth.signOut();
+  document.querySelectorAll("#modeSwitch button").forEach(b=>b.onclick=()=>setMode(b.dataset.mode));
+  $("clearSel").onclick=()=>{selected.clear();renderTree();updateStartBar();};
+  $("startBtn").onclick=startStudy;
+  document.querySelectorAll("#countPills .count-pill").forEach(b=>b.onclick=()=>{
+    sessionLimit=b.dataset.count;
+    document.querySelectorAll("#countPills .count-pill").forEach(x=>x.classList.toggle("active",x===b));
+  });
+  $("exitStudy").onclick=exitStudy;
+  $("doneBtn").onclick=exitStudy;
+  $("editBtn").onclick=openEdit;
+  $("editCancel").onclick=()=>$("editPanel").classList.add("hidden");
+  $("editSave").onclick=saveEdit;
+  $("editDelete").onclick=askDelete;
+  document.querySelectorAll("#tabs .tab:not(.disabled)").forEach(t=>t.onclick=()=>{
+    currentSubject=t.dataset.subject;
+    document.querySelectorAll("#tabs .tab").forEach(x=>x.classList.toggle("active",x===t));
+    applySubjectView();
+    loadAll();
+  });
+  $("addWlBtn").onclick=addWordlist;
+  $("gameExit").onclick=exitGame;
+  $("libraryBtn").onclick=openLibrary;
+  $("notesBtn").onclick=openNotes;
+  $("notesExit").onclick=()=>{ notesCurrent?showNotesBrowse():exitNotes(); };
+  $("modeRead").onclick=()=>setNotesMode("read");
+  $("modeEdit").onclick=()=>setNotesMode("edit");
+  $("libExit").onclick=()=>{ libCurrent?showLibBrowse():exitLibrary(); };
+  $("libAddBtn").onclick=libAddCard;
+  // word game input — space allowed so you can type multi-word phrases
+  $("gameInput").addEventListener("input",e=>onGameType(e.target.value));
+  // recall stage — type a word, press Enter to check against the whole list
+  $("recallInput").addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();submitRecallWord();}});
+  $("recallDone").onclick=finishRecall;
+}
+
+function applySubjectView(){
+  const eng=currentSubject==="English";
+  $("englishHome").classList.toggle("hidden",!eng);
+  $("clozeHome").classList.toggle("hidden",eng);
+  $("modeSwitch").classList.toggle("hidden",eng);
+  $("progressPanel").classList.toggle("hidden",eng);
+}
+
+async function loadAll(){
+  if(currentSubject==="English"){await loadPassages();return;}
+  const[c,f]=await Promise.all([
+    db.from("cloze").select("*").eq("subject",currentSubject),
+    db.from("flashcards").select("*").eq("subject",currentSubject),
+  ]);
+  allRows.cloze=c.data||[];allRows.cards=f.data||[];
+  // Detect whether the optional 'due' column exists so writes never fail.
+  if(allRows.cloze.length)hasDueColumn=Object.prototype.hasOwnProperty.call(allRows.cloze[0],"due");
+  selected.clear();renderTree();updateStartBar();renderProgress();
+}
+
+/* ---------- English word game data ---------- */
+let wordlists=[];
+async function loadPassages(){
+  const wRes=await db.from("wordlists").select("*").order("created_at",{ascending:false});
+  wordlists=wRes.data||[];
+  renderWordlists();
+}
+
+/* ---------- English word game ---------- */
+function renderWordlists(){
+  const box=$("wordlistList");box.innerHTML="";
+  if(!wordlists.length){box.innerHTML=`<div class="empty">No word lists yet. Add one below (e.g. tone words).</div>`;return;}
+  wordlists.forEach(wl=>{
+    const words=parseWords(wl.words);
+    const el=document.createElement("div");el.className="wl-item";
+    el.innerHTML=`<span class="wl-name">${(wl.name||"list").replace(/</g,"&lt;")}</span><span class="wl-count">${words.length} words · play →</span><button class="wl-del">del</button>`;
+    el.querySelector(".wl-name").onclick=()=>startGame(wl);
+    el.querySelector(".wl-count").onclick=()=>startGame(wl);
+    el.querySelector(".wl-del").onclick=async(e)=>{e.stopPropagation();if(db)await db.from("wordlists").delete().eq("id",wl.id);loadPassages();};
+    box.appendChild(el);
+  });
+}
+function parseWords(s){return (s||"").split(/[\n,]+/).map(w=>w.trim()).filter(Boolean);}
+async function addWordlist(){
+  const name=$("wlName").value.trim(), words=$("wlWords").value.trim();
+  if(!name||!words)return $("wlMsg").textContent="Add a name and some words.";
+  const {data:u}=await db.auth.getUser();
+  const {error}=await db.from("wordlists").insert({user_id:u.user.id,name,words});
+  if(error)return $("wlMsg").textContent="Error: "+error.message;
+  $("wlName").value="";$("wlWords").value="";$("wlMsg").textContent="Added ✓";
+  loadPassages();
+}
+
+let game={};
+function startGame(wl){
+  const words=parseWords(wl.words);
+  game={words,pool:[...words],active:[],lives:3,score:0,typed:"",raf:null,spawnT:null,over:false,cleared:[],listName:wl.name};
+  $("home").classList.add("hidden");$("game").classList.remove("hidden");
+  $("recallStage").classList.add("hidden");$("gameResults").classList.add("hidden");$("gameField").classList.remove("hidden");
+  // clear any old words
+  [...$("gameField").querySelectorAll(".falling-word")].forEach(e=>e.remove());
+  updateGameHud();
+  const inp=$("gameInput");inp.value="";inp.disabled=false;setTimeout(()=>inp.focus(),50);
+  // spawn a word every ~1.8s, speed scales slightly with score
+  spawnWord();
+  game.spawnT=setInterval(spawnWord,2600);
+  game.raf=requestAnimationFrame(gameTick);
+}
+function spawnWord(){
+  if(game.over)return;
+  if(!game.pool.length)game.pool=[...game.words]; // recycle
+  const word=game.pool.splice(Math.floor(Math.random()*game.pool.length),1)[0];
+  const field=$("gameField");
+  const el=document.createElement("div");el.className="falling-word";
+  el.dataset.word=word;el.dataset.done="0";
+  el.textContent=word;
+  const x=10+Math.random()*80; // percent
+  el.style.left=x+"%";el.style.top="-40px";
+  field.appendChild(el);
+  // Much slower base; ramps up gradually as score climbs (caps so it stays playable).
+  const speed=0.12+Math.min(0.45,game.score*0.012);
+  game.active.push({el,word,y:-40,speed});
+}
+function gameTick(){
+  if(game.over)return;
+  const field=$("gameField");const h=field.clientHeight-60; // bottom threshold (above input)
+  game.active.forEach(w=>{
+    w.y+=w.speed*2; // slower per-frame movement
+    w.el.style.top=w.y+"px";
+    if(w.y>=h && !w.hit){
+      w.hit=true;w.el.remove();
+      game.lives--;updateGameHud();
+      if(game.lives<=0){endGameStage1();}
+    }
+  });
+  game.active=game.active.filter(w=>!w.hit);
+  if(!game.over)game.raf=requestAnimationFrame(gameTick);
+}
+function updateGameHud(){
+  $("gameLives").textContent="❤️".repeat(Math.max(0,game.lives))+"🖤".repeat(Math.max(0,3-game.lives));
+  $("gameScore").textContent=game.score;
+}
+// typing: match against any active word. Space allowed (multi-word phrases).
+function onGameType(val){
+  if(game.over)return;
+  const v=val.trim().toLowerCase();
+  // highlight partial matches; clear a word on exact match
+  let matched=null;
+  game.active.forEach(w=>{
+    const target=w.word.toLowerCase();
+    w.el.classList.toggle("active", target.startsWith(v)&&v.length>0);
+    if(v===target)matched=w;
+  });
+  if(matched){
+    matched.hit=true;matched.el.remove();
+    game.active=game.active.filter(w=>w!==matched);
+    game.score++;game.cleared.push(matched.word);
+    updateGameHud();
+    $("gameInput").value="";
+  }
+}
+function endGameStage1(){
+  game.over=true;
+  clearInterval(game.spawnT);cancelAnimationFrame(game.raf);
+  $("gameInput").disabled=true;
+  // move to recall stage
+  $("gameField").classList.add("hidden");
+  $("recallStage").classList.remove("hidden");
+  $("recallInput").value="";$("recallFound").innerHTML="";
+  game.recallFound=new Set();               // words correctly recalled
+  game.recallAll=game.words.map(w=>w.toLowerCase()); // full list to check against
+  updateRecallCount();
+  let left=30;$("recallTimer").textContent="0:30";$("recallTimer").classList.remove("low");
+  setTimeout(()=>$("recallInput").focus(),50);
+  game.recallT=setInterval(()=>{
+    left--;
+    $("recallTimer").textContent="0:"+String(left).padStart(2,"0");
+    if(left<=10)$("recallTimer").classList.add("low");
+    if(left<=0){clearInterval(game.recallT);finishRecall();}
+  },1000);
+}
+function updateRecallCount(){
+  $("recallCount").textContent=`${game.recallFound.size} / ${game.words.length} recalled`;
+}
+// Called on Enter in the recall input: check the typed word against the WHOLE list.
+function submitRecallWord(){
+  const raw=$("recallInput").value.trim();
+  if(!raw)return;
+  const w=raw.toLowerCase();
+  $("recallInput").value="";
+  const idx=game.recallAll.indexOf(w);
+  if(idx!==-1 && !game.recallFound.has(w)){
+    game.recallFound.add(w);
+    const pill=document.createElement("span");pill.className="recall-hit";pill.textContent="✓ "+game.words[idx];
+    $("recallFound").appendChild(pill);
+    updateRecallCount();
+    if(game.recallFound.size===game.words.length){clearInterval(game.recallT);finishRecall();} // got them all
+  }else{
+    // brief shake feedback for wrong / already-found
+    $("recallInput").classList.remove("shake");void $("recallInput").offsetWidth;$("recallInput").classList.add("shake");
+  }
+}
+function finishRecall(){
+  clearInterval(game.recallT);
+  const found=game.recallFound||new Set();
+  const all=game.words;
+  $("recallStage").classList.add("hidden");
+  $("gameResults").classList.remove("hidden");
+  $("gameResultsBody").innerHTML=
+    `<div class="study-eyebrow">Game over · ${game.listName||""}</div>
+     <div style="text-align:center"><div class="big-stat" style="font-family:'Space Grotesk';font-size:2.2rem;font-weight:700;color:var(--violet-b)">${game.score}</div>
+     <div class="sub" style="font-family:'JetBrains Mono',monospace;color:var(--mute);margin-bottom:1rem">words cleared in the game</div></div>
+     <div style="font-family:'JetBrains Mono',monospace;font-size:0.85rem;margin-bottom:0.5rem">Recall: <b style="color:var(--good)">${found.size}</b> / ${all.length} remembered</div>
+     <div style="line-height:1.9">${all.map(w=>found.has(w.toLowerCase())?`<span class="recall-hit">✓ ${w}</span>`:`<span class="recall-miss">· ${w}</span>`).join("<br>")}</div>
+     <div class="mark-row"><button id="gameAgain">Play again</button> <button class="ghost" id="gameBack">Back</button></div>`;
+  $("gameAgain").onclick=()=>{const wl=wordlists.find(w=>w.name===game.listName)||{words:game.words.join(","),name:game.listName};startGame(wl);};
+  $("gameBack").onclick=exitGame;
+}
+function exitGame(){
+  if(game.spawnT)clearInterval(game.spawnT);
+  if(game.raf)cancelAnimationFrame(game.raf);
+  if(game.recallT)clearInterval(game.recallT);
+  game.over=true;
+  $("game").classList.add("hidden");$("home").classList.remove("hidden");
+}
+
+
+
+function setMode(m){
+  mode=m;selected.clear();
+  document.querySelectorAll("#modeSwitch button").forEach(b=>b.classList.toggle("active",b.dataset.mode===m));
+  renderTree();updateStartBar();
+}
+function data(){return mode==="cloze"?allRows.cloze:allRows.cards;}
+
+function renderTree(){
+  const tree={};
+  data().forEach(r=>{const u=r.unit||"Other",a=r.aos||"",t=r.topic||"General";
+    tree[u]=tree[u]||{};tree[u][a]=tree[u][a]||{};tree[u][a][t]=tree[u][a][t]||[];tree[u][a][t].push(r);});
+  const box=$("navTree");box.innerHTML="";
+  if(!data().length){box.innerHTML=`<div class="empty"><div class="big">Nothing here yet.</div><div>Import your ${mode==="cloze"?"questions":"flashcards"} or add one below.</div></div>`;return;}
+  Object.keys(tree).sort().forEach(u=>{
+    Object.keys(tree[u]).sort().forEach(a=>{
+      const topics=tree[u][a];
+      const group=document.createElement("div");group.className="nav-group";
+      const head=document.createElement("div");head.className="nav-group-head";
+      const allKeys=Object.keys(topics).map(t=>`${u}||${a}||${t}`);
+      const allSel=allKeys.every(k=>selected.has(k));
+      head.innerHTML=`<span>${u}${a?" · "+a:""}</span><span class="aos-select">${allSel?"deselect all":"select all"}</span>`;
+      head.querySelector(".aos-select").onclick=(e)=>{e.stopPropagation();
+        if(allSel)allKeys.forEach(k=>selected.delete(k));else allKeys.forEach(k=>selected.add(k));
+        renderTree();updateStartBar();};
+      group.appendChild(head);
+      const chips=document.createElement("div");chips.className="topic-chips";
+      Object.keys(topics).sort().forEach(t=>{
+        const items=topics[t];const k=`${u}||${a}||${t}`;
+        const mastered=items.filter(x=>(x.box||1)>=4).length;
+        const chip=document.createElement("div");chip.className="topic-chip"+(selected.has(k)?" selected":"");
+        chip.innerHTML=`<span class="check">${selected.has(k)?"✓":""}</span>${t} <span class="count">${items.length}</span>`+
+          (mastered===items.length&&items.length?` <span class="mastered-pip"></span>`:"");
+        chip.onclick=()=>{selected.has(k)?selected.delete(k):selected.add(k);renderTree();updateStartBar();};
+        chips.appendChild(chip);
+      });
+      group.appendChild(chips);box.appendChild(group);
+    });
+  });
+}
+
+function selectedRows(){return data().filter(r=>selected.has(keyOf(r)));}function updateStartBar(){
+  const rows=selectedRows();
+  $("selCount").textContent=`${selected.size} topic${selected.size===1?"":"s"} · ${rows.length} ${mode==="cloze"?"questions":"cards"}`;
+  $("startBtn").disabled=rows.length===0;
+}
+
+/* ---------- spaced repetition ---------- */
+// Right: master faster (jump up, +2 from box>=2, else +1). Wrong: back to box 1 (due now).
+// due interval grows with box; wrong => due immediately (and requeued this session).
+const BOX_DAYS=[0,0,1,3,7,16]; // index by box 1..5
+function schedule(row,correct){
+  const old=row.box||1;let nb;
+  if(correct)nb=old>=2?Math.min(5,old+2):Math.min(5,old+1);
+  else nb=1;
+  const days=BOX_DAYS[nb]||0;
+  const due=new Date(Date.now()+days*24*3600*1000).toISOString();
+  const upd={box:nb,last_rating:correct?"good":"again",times_seen:(row.times_seen||0)+1,last_reviewed:new Date().toISOString()};
+  if(hasDueColumn)upd.due=due;
+  return upd;
+}
+
+function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+
+/* ---------- progress page (all subjects) ---------- */
+function dayKey(d){const x=new Date(d);return x.getFullYear()+"-"+String(x.getMonth()+1).padStart(2,"0")+"-"+String(x.getDate()).padStart(2,"0");}
+async function renderProgress(){
+  if(!db){return;}
+  // Pull every cloze row for the user across ALL subjects (RLS scopes to user).
+  // Select * so it works whether or not the optional 'due' column exists.
+  const {data,error}=await db.from("cloze").select("*");
+  if(error){$("progressBody").innerHTML=`<div class="empty">Couldn't load progress yet.</div>`;return;}
+  const rows=data||[];
+  const now=new Date(), todayKey=dayKey(now);
+  // group by subject
+  const subj={};
+  rows.forEach(r=>{const s=r.subject||"Other";(subj[s]=subj[s]||[]).push(r);});
+
+  // overall 7-day activity (all subjects combined for the bar chart)
+  const perDay={};
+  rows.forEach(r=>{if(r.last_reviewed){const k=dayKey(r.last_reviewed);perDay[k]=(perDay[k]||0)+1;}});
+  const days=[];for(let i=6;i>=0;i--){const d=new Date(now);d.setDate(d.getDate()-i);days.push(d);}
+  const counts=days.map(d=>perDay[dayKey(d)]||0);
+  const max=Math.max(1,...counts);
+  const dayName=d=>["Sun","Mon","Tue","Wed","Thu","Fri","Sat"][d.getDay()];
+
+  let html="";
+  // per-subject stat cards
+  const subjects=Object.keys(subj).sort();
+  if(!subjects.length){html=`<div class="empty">No questions yet. Add some to see progress.</div>`;$("progressBody").innerHTML=html;return;}
+  subjects.forEach(s=>{
+    const list=subj[s];
+    const today=list.filter(r=>r.last_reviewed&&dayKey(r.last_reviewed)===todayKey).length;
+    const mastered=list.filter(r=>(r.box||1)>=4).length;
+    const due=list.filter(r=>!r.due||new Date(r.due).getTime()<=now.getTime()).length;
+    html+=`<div style="font-family:'Space Grotesk',sans-serif;font-weight:600;color:var(--lilac);margin:0.6rem 0 0.4rem">${s}</div>
+    <div class="prog-today">
+      <div class="prog-stat"><div class="num">${today}</div><div class="lbl">today</div></div>
+      <div class="prog-stat"><div class="num">${mastered}</div><div class="lbl">mastered</div></div>
+      <div class="prog-stat"><div class="num">${due}</div><div class="lbl">due now</div></div>
+    </div>`;
+  });
+  // combined 7-day bars
+  html+=`<div style="font-family:'JetBrains Mono',monospace;font-size:0.72rem;color:var(--mute);margin:0.8rem 0 0.4rem;letter-spacing:0.05em;text-transform:uppercase">Last 7 days · all subjects</div><div class="prog-bars">`;
+  days.forEach((d,i)=>{
+    html+=`<div class="prog-day"><span class="day-lbl">${dayKey(d)===todayKey?"Today":dayName(d)}</span>
+      <span class="day-track"><span class="day-fill" style="width:${(counts[i]/max)*100}%"></span></span>
+      <span class="day-num">${counts[i]}</span></div>`;
+  });
+  html+=`</div>`;
+  $("progressBody").innerHTML=html;
+}
+
+function startStudy(){
+  // Order for spaced repetition: due-first (most overdue), then weakest box,
+  // then shuffle within that so it isn't identical each time.
+  let rows=[...selectedRows()];
+  const now=Date.now();
+  rows.sort((a,b)=>{
+    const ad=a.due?new Date(a.due).getTime():0, bd=b.due?new Date(b.due).getTime():0;
+    const aDue=ad<=now, bDue=bd<=now;
+    if(aDue!==bDue)return aDue?-1:1;         // due cards first
+    if((a.box||1)!==(b.box||1))return (a.box||1)-(b.box||1); // weaker first
+    return Math.random()-0.5;                 // shuffle within tier
+  });
+  if(sessionLimit!=="all")rows=rows.slice(0,parseInt(sessionLimit,10));
+  queue=rows;qi=0;
+  sessionStats={right:0,wrong:0,total:0};
+  $("home").classList.add("hidden");$("study").classList.remove("hidden");$("sessionDone").classList.add("hidden");$("studyCard").classList.remove("hidden");
+  clockS=0;$("studyClock").textContent="00:00";clearInterval(clockT);
+  clockT=setInterval(()=>{clockS++;const m=String(Math.floor(clockS/60)).padStart(2,"0"),s=String(clockS%60).padStart(2,"0");$("studyClock").textContent=`${m}:${s}`;},1000);
+  renderStudy();
+}
+function exitStudy(){clearInterval(clockT);$("study").classList.add("hidden");$("home").classList.remove("hidden");loadAll();}
+
+function fmtPips(box){let s=`<span class="box-pips"><span class="lbl">box</span>`;for(let i=1;i<=5;i++){const on=i<=box,m=box>=4;s+=`<span class="pip ${on?"on":""} ${on&&m?"mastered":""}"></span>`;}return s+`</span>`;}
+
+function updateProgress(){
+  $("studyCount").innerHTML=`${Math.min(qi+1,queue.length)} / ${queue.length}`;
+  $("progFill").style.width=`${(qi/queue.length)*100}%`;
+}
+
+function parseCloze(text){const parts=[],answers=[];const re=/\[\[(.*?)\]\]/g;let last=0,m;
+  while((m=re.exec(text))!==null){parts.push({type:"text",val:text.slice(last,m.index)});parts.push({type:"blank",idx:answers.length});answers.push(m[1].trim());last=re.lastIndex;}
+  parts.push({type:"text",val:text.slice(last)});return{parts,answers};}
+
+function renderStudy(){
+  if(qi>=queue.length)return finishSession();
+  updateProgress();
+  const row=queue[qi];
+  $("answerReveal").classList.add("hidden");$("markRow").classList.add("hidden");$("answerList").innerHTML="";
+  $("editPanel").classList.add("hidden");
+  $("deleteConfirm").classList.add("hidden");pendingDelete=false;
+  $("studyEyebrow").innerHTML=`${[row.unit,row.aos,row.topic].filter(Boolean).join(" · ")} ${fmtPips(row.box||1)}`;
+
+  if(mode==="cloze"){
+    phase="input";
+    const{parts,answers}=parseCloze(row.text);currentAnswers=answers;
+    let html='<div class="cloze-text">';
+    parts.forEach(p=>{html+=p.type==="text"?p.val.replace(/\n/g,"<br>"):`<input class="blank-input" data-i="${p.idx}" autocomplete="off" spellcheck="false" size="${Math.max(6,(answers[p.idx]||'').length)}">`;});
+    html+='</div>';
+    $("studyBody").innerHTML=html;
+    $("kbdHint").innerHTML=`<span class="kbd">Enter</span> next blank · <span class="kbd">Enter</span> on last = submit`;
+    const inputs=[...$("studyBody").querySelectorAll(".blank-input")];
+    inputs.forEach((inp,i)=>inp.addEventListener("keydown",e=>{
+      if(e.key==="Enter"){e.preventDefault();if(i<inputs.length-1)inputs[i+1].focus();else submitCloze();}
+    }));
+    if(inputs[0])inputs[0].focus();
+  }else{
+    phase="question";
+    $("studyBody").innerHTML=`<div class="fc-side">Question</div><div class="fc-face">${row.question}</div>`;
+    $("kbdHint").innerHTML=`<span class="kbd">Enter</span> to reveal answer`;
+  }
+}
+
+function submitCloze(){
+  // colour blanks vs stored answer as a hint, then reveal + self-mark
+  const inputs=[...$("studyBody").querySelectorAll(".blank-input")];
+  const norm=s=>(s||"").trim().toLowerCase().replace(/\s+/g," ");
+  inputs.forEach(inp=>{const i=+inp.dataset.i;inp.classList.add(norm(inp.value)===norm(currentAnswers[i])?"correct":"wrong");inp.disabled=true;});
+  $("answerList").innerHTML=currentAnswers.map(a=>`<span class="answer-pill">${a}</span>`).join("");
+  $("answerReveal").classList.remove("hidden");
+  showMark();
+}
+function revealCard(){
+  const row=queue[qi];
+  $("studyBody").innerHTML=`<div class="fc-side">Answer</div><div class="fc-face">${row.answer}</div>`;
+  showMark();
+}
+function showMark(){
+  phase="mark";
+  markArmed=false; // require a fresh key press before marking can fire
+  // move focus off any text input so the next Enter/Space is clean
+  if(document.activeElement&&document.activeElement.blur)document.activeElement.blur();
+  $("markRow").classList.remove("hidden");
+  $("kbdHint").innerHTML=`<span class="kbd">Enter</span> = got it · <span class="kbd">Space</span> = missed it`;
+}
+
+async function mark(correct){
+  const row=queue[qi];
+  const upd=schedule(row,correct);
+  Object.assign(row,upd);
+  sessionStats.total++;correct?sessionStats.right++:sessionStats.wrong++;
+  // persist (fire-and-forget; guarded)
+  try{ db&&db.from(mode==="cloze"?"cloze":"flashcards").update(upd).eq("id",row.id); }catch(_){}
+  // wrong => requeue later this session
+  if(!correct){const clone={...row};queue.push(clone);}
+  qi++;
+  renderStudy();
+}
+
+function finishSession(){
+  clearInterval(clockT);
+  $("studyCard").classList.add("hidden");$("sessionDone").classList.remove("hidden");
+  $("progFill").style.width="100%";
+  const acc=sessionStats.total?Math.round(100*sessionStats.right/sessionStats.total):0;
+  const m=String(Math.floor(clockS/60)).padStart(2,"0"),s=String(clockS%60).padStart(2,"0");
+  $("doneStats").innerHTML=`${sessionStats.total} answered · ${sessionStats.right} right · ${sessionStats.wrong} missed · ${acc}% · ${m}:${s}`;
+}
+
+/* ---------- global keyboard for study ---------- */
+/* ---------- edit / delete current card ---------- */
+function openEdit(){
+  const row=queue[qi];if(!row)return;
+  $("editText").value=row.text;
+  $("editPanel").classList.remove("hidden");
+}
+async function saveEdit(){
+  const row=queue[qi];if(!row)return;
+  const text=$("editText").value.trim();
+  if(!text||!text.includes("[["))return alert("Keep at least one [[blank]].");
+  row.text=text;
+  if(db)await db.from("cloze").update({text}).eq("id",row.id);
+  $("editPanel").classList.add("hidden");
+  renderStudy(); // re-render with new text
+}
+async function deleteCard(){
+  const row=queue[qi];if(!row)return;
+  if(db)await db.from("cloze").delete().eq("id",row.id);
+  queue.splice(qi,1);
+  $("editPanel").classList.add("hidden");
+  $("deleteConfirm").classList.add("hidden");
+  pendingDelete=false;
+  if(qi>=queue.length)qi=Math.max(0,queue.length-1);
+  queue.length?renderStudy():finishSession();
+}
+function askDelete(){
+  if(!queue[qi])return;
+  pendingDelete=true;
+  $("deleteConfirm").classList.remove("hidden");
+}
+function cancelDelete(){
+  pendingDelete=false;
+  $("deleteConfirm").classList.add("hidden");
+}
+
+function wireStudyKeys(){
+  // Arm marking only after a key is released. This ensures the SAME Enter
+  // that submits a cloze cannot also mark it — you see the answer first,
+  // then a fresh Enter (right) or Space (wrong) marks it.
+  window.addEventListener("keyup",e=>{
+    const editing=!$("editPanel").classList.contains("hidden");
+    const inField=e.target&&(e.target.tagName==="TEXTAREA"||e.target.tagName==="INPUT");
+    if(editing&&inField)return;           // typing in the editor, not marking
+    if(phase==="mark") markArmed=true;
+  });
+
+  window.addEventListener("keydown",e=>{
+    if($("study").classList.contains("hidden"))return;
+    // If the edit panel is open and focus is in a text field, let ALL keys through
+    // (space, enter, etc.) so editing works normally. Esc closes the panel.
+    const editing=!$("editPanel").classList.contains("hidden");
+    const inField=e.target&&(e.target.tagName==="TEXTAREA"||e.target.tagName==="INPUT");
+    if(editing&&inField){
+      if(e.key==="Escape"){e.preventDefault();$("editPanel").classList.add("hidden");}
+      return; // never mark/delete/advance while editing
+    }
+    // If a delete is pending, Enter confirms and Esc cancels — nothing else.
+    if(pendingDelete){
+      if(e.key==="Enter"){e.preventDefault();deleteCard();}
+      else if(e.key==="Escape"){e.preventDefault();cancelDelete();}
+      return;
+    }
+    // Ctrl+D (or Cmd+D) = ask to delete the current card
+    if((e.ctrlKey||e.metaKey)&&(e.key==="d"||e.key==="D")){
+      e.preventDefault();
+      askDelete();
+      return;
+    }
+    // session-complete screen: Enter returns to topics
+    if(!$("sessionDone").classList.contains("hidden")){
+      if(e.key==="Enter"){e.preventDefault();exitStudy();}
+      return;
+    }
+    if(phase==="mark"){
+      // Space is intercepted only here (not while typing) so answers can
+      // contain spaces. Marking waits until markArmed (a fresh keypress).
+      if(e.key==="Enter"){
+        e.preventDefault();
+        if(markArmed) mark(true);
+      }else if(e.code==="Space"){
+        e.preventDefault();
+        if(markArmed) mark(false);
+      }
+    }else if(phase==="question"&&mode==="cards"){
+      if(e.key==="Enter"){e.preventDefault();revealCard();}
+    }
+    // cloze 'input' phase: Enter handled on the inputs; Space passes through.
+  });
+}
+
+/* ---------- NOTES ---------- */
+let allNotes=[], notesCurrent=null, notesMode="read";
+
+async function loadNotes(){
+  if(!db)return;
+  const {data,error}=await db.from("notes").select("*").eq("subject",currentSubject);
+  if(error){allNotes=[];return;}
+  allNotes=(data||[]).sort((a,b)=>(a.ord||0)-(b.ord||0));
+}
+async function openNotes(){
+  $("home").classList.add("hidden");
+  $("notes").classList.remove("hidden");
+  await loadNotes();
+  showNotesBrowse();
+}
+function exitNotes(){
+  $("notes").classList.add("hidden");
+  $("home").classList.remove("hidden");
+  loadAll();
+}
+function showNotesBrowse(){
+  notesCurrent=null;
+  $("notesBrowse").classList.remove("hidden");
+  $("notesTopic").classList.add("hidden");
+  $("notesCrumb").textContent=currentSubject;
+  renderNotesTree();
+}
+function renderNotesTree(){
+  const tree={};
+  allNotes.forEach(n=>{
+    const u=n.unit||"Other", a=n.aos||"", t=n.topic||"General";
+    tree[u]=tree[u]||{}; tree[u][a]=tree[u][a]||{}; tree[u][a][t]=(tree[u][a][t]||0)+1;
+  });
+  const box=$("notesTree"); box.innerHTML="";
+  if(!allNotes.length){box.innerHTML='<div class="empty"><div class="big">No notes yet.</div><div>Run the notes import in Supabase to load them.</div></div>';return;}
+  Object.keys(tree).sort().forEach(u=>{
+    Object.keys(tree[u]).sort().forEach(a=>{
+      const head=document.createElement("div");
+      head.className="nav-group-head";
+      head.innerHTML=`<span>${u}${a?" · "+a:""}</span>`;
+      box.appendChild(head);
+      Object.keys(tree[u][a]).sort().forEach(t=>{
+        const n=tree[u][a][t];
+        const el=document.createElement("div");
+        el.className="lib-topic";
+        el.innerHTML=`<span class="t-name">${t}</span><span class="t-count">${n} dot point${n===1?"":"s"}</span>`;
+        el.onclick=()=>openNotesTopic(u,a,t);
+        box.appendChild(el);
+      });
+    });
+  });
+}
+function openNotesTopic(unit,aos,topic){
+  notesCurrent={unit,aos,topic};
+  $("notesBrowse").classList.add("hidden");
+  $("notesTopic").classList.remove("hidden");
+  $("notesTopicName").textContent=topic;
+  $("notesTopicMeta").textContent=[unit,aos].filter(Boolean).join(" · ");
+  $("notesCrumb").textContent=`${currentSubject} · ${topic}`;
+  setNotesMode("read");
+  renderNotesSections();
+}
+function setNotesMode(m){
+  notesMode=m;
+  $("modeRead").classList.toggle("active",m==="read");
+  $("modeEdit").classList.toggle("active",m==="edit");
+  document.querySelectorAll("#notesSections .note-sec").forEach(sec=>{
+    sec.classList.toggle("editing",m==="edit");
+    const body=sec.querySelector(".note-body");
+    if(body)body.setAttribute("contenteditable",m==="edit"?"true":"false");
+  });
+}
+function notesRows(){
+  if(!notesCurrent)return [];
+  return allNotes.filter(n=>(n.unit||"Other")===notesCurrent.unit&&(n.aos||"")===notesCurrent.aos&&(n.topic||"General")===notesCurrent.topic);
+}
+function renderNotesSections(){
+  const box=$("notesSections"); box.innerHTML="";
+  notesRows().forEach((n,idx)=>{
+    const sec=document.createElement("div");
+    sec.className="note-sec"+(notesMode==="edit"?" editing":"");
+    sec.innerHTML=`
+      <div class="note-dp"><span class="dp-num">${idx+1}</span>${escHtml(n.dp||"")}</div>
+      <div class="note-toolbar">
+        <button data-cmd="bold" title="Bold"><b>B</b></button>
+        <button data-cmd="italic" title="Italic"><i>I</i></button>
+        <button data-cmd="underline" title="Underline"><u>U</u></button>
+        <span class="sep"></span>
+        <select data-size title="Text size">
+          <option value="">Size</option>
+          <option value="5">Large heading</option>
+          <option value="4">Heading</option>
+          <option value="3">Normal</option>
+          <option value="2">Small</option>
+        </select>
+        <span class="sep"></span>
+        <button data-cmd="insertUnorderedList" title="Bullet list">• List</button>
+        <button data-cmd="indent" title="Indent">→</button>
+        <button data-cmd="outdent" title="Outdent">←</button>
+        <span class="sep"></span>
+        <button data-cmd="removeFormat" title="Clear formatting">clear</button>
+      </div>
+      <div class="note-body" contenteditable="${notesMode==="edit"}">${n.body||""}</div>
+      <div class="note-save">
+        <button class="save-note">Save</button>
+        <button class="ghost small revert-note">Revert</button>
+        <span class="note-saved"></span>
+      </div>
+      <div class="note-cards">
+        <div class="note-cards-head"><span class="chev">▸</span><span class="nc-label"></span></div>
+        <div class="note-cards-body"></div>
+      </div>`;
+    const body=sec.querySelector(".note-body");
+    const original=n.body||"";
+    // toolbar
+    sec.querySelectorAll(".note-toolbar button[data-cmd]").forEach(b=>{
+      b.onmousedown=e=>e.preventDefault(); // keep selection
+      b.onclick=()=>{document.execCommand(b.dataset.cmd,false,null);body.focus();};
+    });
+    const sel=sec.querySelector("select[data-size]");
+    sel.onmousedown=e=>e.stopPropagation();
+    sel.onchange=()=>{if(sel.value){document.execCommand("fontSize",false,sel.value);sel.value="";body.focus();}};
+    // save / revert
+    sec.querySelector(".save-note").onclick=async()=>{
+      const html=body.innerHTML;
+      n.body=html;
+      if(db){const{error}=await db.from("notes").update({body:html}).eq("id",n.id);
+        sec.querySelector(".note-saved").textContent=error?("Error: "+error.message):"Saved ✓";}
+      else sec.querySelector(".note-saved").textContent="Saved ✓";
+      setTimeout(()=>{const s=sec.querySelector(".note-saved");if(s)s.textContent="";},2500);
+    };
+    sec.querySelector(".revert-note").onclick=()=>{body.innerHTML=original;};
+    // related cards
+    const wrap=sec.querySelector(".note-cards");
+    const head=sec.querySelector(".note-cards-head");
+    head.onclick=()=>wrap.classList.toggle("open");
+    renderNoteCards(sec,n);
+    box.appendChild(sec);
+  });
+
+  // unlinked cards for this topic, with fast bulk linking
+  const rest=document.createElement("div");
+  rest.className="note-sec";
+  rest.innerHTML=`<div class="note-dp"><span class="dp-num">·</span>Unlinked cards in this topic</div>
+    <div class="link-help">Click cards to select, then click a numbered button to file them under that dot point.</div>
+    <div class="link-bar" id="linkBar"></div>
+    <div class="note-cards open"><div class="note-cards-body" id="noteOtherCards"></div></div>`;
+  box.appendChild(rest);
+  renderUnlinked();
+}
+// cards whose dp matches this dot point
+function cardsForDp(dp){
+  if(!notesCurrent)return [];
+  return allRows.cloze.filter(c=>(c.topic||"General")===notesCurrent.topic&&(c.dp||"")===dp);
+}
+function renderNoteCards(sec,n){
+  const wrap=sec.querySelector(".note-cards");
+  const body=sec.querySelector(".note-cards-body");
+  const list=cardsForDp(n.dp);
+  sec.querySelector(".nc-label").textContent=`Cards · ${list.length}`;
+  body.innerHTML="";
+  if(!list.length){
+    const e=document.createElement("div");e.className="nc-empty";
+    e.textContent="No cards for this dot point yet — add one below.";
+    body.appendChild(e);
+  }
+  list.forEach(r=>body.appendChild(cardRowEl(r,()=>renderNoteCards(sec,n))));
+  // add: a clear button that opens the box, focused and ready
+  const addWrap=document.createElement("div");
+  addWrap.className="nc-addwrap";
+  addWrap.innerHTML=`<button class="nc-open">+ Add card</button>
+    <div class="add-form nc-form">
+      <textarea rows="2" placeholder="New card — mark blanks with [[double brackets]]"></textarea>
+      <button class="small nc-add">Add card</button>
+      <button class="ghost small nc-close">Cancel</button>
+      <span class="nc-msg" style="font-family:'JetBrains Mono',monospace;font-size:0.74rem;color:var(--good);margin-left:0.4rem"></span>
+    </div>`;
+  const form=addWrap.querySelector(".nc-form"), ta=addWrap.querySelector("textarea");
+  addWrap.querySelector(".nc-open").onclick=()=>{addWrap.classList.add("open");ta.focus();};
+  addWrap.querySelector(".nc-close").onclick=()=>{addWrap.classList.remove("open");ta.value="";};
+  const doAdd=async()=>{
+    const text=ta.value.trim();
+    const msg=addWrap.querySelector(".nc-msg");
+    if(!text||!text.includes("[["))return msg.textContent="Needs at least one [[blank]].";
+    const {data:u}=await db.auth.getUser();
+    const row={user_id:u.user.id,subject:currentSubject,unit:notesCurrent.unit,aos:notesCurrent.aos||null,
+               topic:notesCurrent.topic,text,box:1};
+    if(hasDpColumn)row.dp=n.dp;
+    if(hasDueColumn)row.due=new Date().toISOString();
+    let {data:ins,error}=await db.from("cloze").insert(row).select();
+    // retry without optional columns if the DB doesn't have them
+    if(error&&/column/i.test(error.message||"")){
+      hasDueColumn=false;delete row.due;
+      ({data:ins,error}=await db.from("cloze").insert(row).select());
+      if(error&&/column/i.test(error.message||"")){
+        hasDpColumn=false;delete row.dp;
+        ({data:ins,error}=await db.from("cloze").insert(row).select());
+      }
+    }
+    if(error)return msg.textContent="Error: "+error.message;
+    allRows.cloze.push((ins&&ins[0])||{...row,id:"tmp-"+Date.now()});
+    ta.value="";msg.textContent="Added ✓";
+    renderNoteCards(sec,n);
+    // keep the box open so several cards can be added in a row
+    const w=sec.querySelector(".nc-addwrap");
+    if(w){w.classList.add("open");w.querySelector("textarea").focus();
+      w.querySelector(".nc-msg").textContent="Added ✓";}
+  };
+  addWrap.querySelector(".nc-add").onclick=doAdd;
+  // Ctrl/Cmd+Enter adds without reaching for the mouse
+  ta.addEventListener("keydown",e=>{if((e.ctrlKey||e.metaKey)&&e.key==="Enter"){e.preventDefault();doAdd();}});
+  body.appendChild(addWrap);
+}
+/* --- unlinked cards + fast bulk linking --- */
+let linkSel=new Set();
+function unlinkedRows(){
+  const dps=new Set(notesRows().map(n=>n.dp));
+  return allRows.cloze.filter(c=>(c.topic||"General")===notesCurrent.topic&&!dps.has(c.dp||""));
+}
+function renderUnlinked(){
+  const box=$("noteOtherCards"), bar=$("linkBar");
+  if(!box)return;
+  const list=unlinkedRows();
+  // prune selections that no longer exist
+  [...linkSel].forEach(id=>{if(!list.some(c=>c.id===id))linkSel.delete(id);});
+  box.innerHTML="";
+  if(!list.length){
+    box.innerHTML='<div class="nc-empty">All cards in this topic are filed under a dot point. ✓</div>';
+    if(bar)bar.innerHTML="";return;
+  }
+  // selectable rows
+  list.forEach(r=>{
+    const el=document.createElement("div");
+    el.className="lib-card selectable"+(linkSel.has(r.id)?" sel":"");
+    el.innerHTML=`<div class="c-pick">${linkSel.has(r.id)?"✓":""}</div>
+      <div class="c-main">
+        <div class="c-text">${showBlanks(r.text)}</div>
+        <div class="c-actions">
+          <button class="ghost small lib-edit">Edit</button>
+          <button class="ghost small lib-del" style="color:var(--miss)">Delete</button>
+          <span class="c-box">box ${r.box||1}</span>
+        </div>
+      </div>`;
+    // click anywhere (except buttons) toggles selection — fast
+    el.onclick=(e)=>{
+      if(e.target.closest("button")||e.target.tagName==="TEXTAREA")return;
+      linkSel.has(r.id)?linkSel.delete(r.id):linkSel.add(r.id);
+      renderUnlinked();
+    };
+    el.querySelector(".lib-edit").onclick=(e)=>{
+      e.stopPropagation();
+      const main=el.querySelector(".c-main");
+      main.innerHTML=`<textarea rows="4">${escHtml(r.text)}</textarea>
+        <div class="c-actions"><button class="lib-save">Save</button>
+        <button class="ghost small lib-cancel">Cancel</button></div>`;
+      const ta=main.querySelector("textarea");ta.focus();
+      main.querySelector(".lib-save").onclick=async(ev)=>{
+        ev.stopPropagation();
+        const text=ta.value.trim();
+        if(!text||!text.includes("[["))return alert("Keep at least one [[blank]].");
+        r.text=text;
+        if(db)await db.from("cloze").update({text}).eq("id",r.id);
+        renderUnlinked();
+      };
+      main.querySelector(".lib-cancel").onclick=(ev)=>{ev.stopPropagation();renderUnlinked();};
+    };
+    el.querySelector(".lib-del").onclick=async(e)=>{
+      e.stopPropagation();
+      if(!confirm("Delete this card permanently?"))return;
+      if(db)await db.from("cloze").delete().eq("id",r.id);
+      allRows.cloze=allRows.cloze.filter(x=>x.id!==r.id);
+      linkSel.delete(r.id);
+      renderUnlinked();
+    };
+    box.appendChild(el);
+  });
+  renderLinkBar(list);
+}
+function renderLinkBar(list){
+  const bar=$("linkBar");if(!bar)return;
+  const rows=notesRows();
+  const n=linkSel.size;
+  bar.innerHTML=`
+    <span class="link-count">${n} selected</span>
+    <button class="ghost small" id="linkAll">Select all</button>
+    <button class="ghost small" id="linkNone">Clear</button>
+    <span class="link-sep"></span>
+    <span class="link-to">File under →</span>
+    <span class="link-chips"></span>`;
+  const chips=bar.querySelector(".link-chips");
+  rows.forEach((note,i)=>{
+    const c=document.createElement("button");
+    c.className="link-chip";c.textContent=i+1;
+    c.title=note.dp||"";
+    c.disabled=n===0;
+    c.onclick=()=>linkSelectedTo(note.dp);
+    chips.appendChild(c);
+  });
+  bar.querySelector("#linkAll").onclick=()=>{list.forEach(r=>linkSel.add(r.id));renderUnlinked();};
+  bar.querySelector("#linkNone").onclick=()=>{linkSel.clear();renderUnlinked();};
+}
+async function linkSelectedTo(dp){
+  if(!linkSel.size)return;
+  const ids=[...linkSel];
+  // update locally first so the UI is instant
+  allRows.cloze.forEach(c=>{if(ids.includes(c.id))c.dp=dp;});
+  linkSel.clear();
+  if(db){
+    const {error}=await db.from("cloze").update({dp}).in("id",ids);
+    if(error){
+      alert("Couldn't save the link: "+error.message+
+        (/column/i.test(error.message||"")?"\n\nYour cloze table may need a 'dp' column. Run: alter table public.cloze add column if not exists dp text;":""));
+    }
+  }
+  renderNotesSections();   // refresh all sections + counts
+}
+// one editable card row, reused by notes + library
+function cardRowEl(r,refresh){
+  const el=document.createElement("div");el.className="lib-card";
+  el.innerHTML=`<div class="c-text">${showBlanks(r.text)}</div>
+    <div class="c-actions">
+      <button class="ghost small lib-unlink" title="Remove from this dot point">Unlink</button>
+      <button class="ghost small lib-edit">Edit</button>
+      <button class="ghost small lib-del" style="color:var(--miss)">Delete</button>
+      <span class="c-box">box ${r.box||1}</span>
+    </div>`;
+  el.querySelector(".lib-edit").onclick=()=>{
+    el.innerHTML=`<textarea rows="4">${escHtml(r.text)}</textarea>
+      <div class="c-actions"><button class="lib-save">Save</button>
+      <button class="ghost small lib-cancel">Cancel</button></div>`;
+    const ta=el.querySelector("textarea");ta.focus();
+    el.querySelector(".lib-save").onclick=async()=>{
+      const text=ta.value.trim();
+      if(!text||!text.includes("[["))return alert("Keep at least one [[blank]].");
+      r.text=text;
+      if(db)await db.from("cloze").update({text}).eq("id",r.id);
+      refresh();
+    };
+    el.querySelector(".lib-cancel").onclick=refresh;
+  };
+  const ub=el.querySelector(".lib-unlink");
+  if(!r.dp) ub.style.display="none";     // nothing to unlink from
+  ub.onclick=async()=>{
+    r.dp=null;
+    if(db)await db.from("cloze").update({dp:null}).eq("id",r.id);
+    renderNotesSections();
+  };
+  el.querySelector(".lib-del").onclick=async()=>{
+    if(!confirm("Delete this card permanently?"))return;
+    if(db)await db.from("cloze").delete().eq("id",r.id);
+    allRows.cloze=allRows.cloze.filter(x=>x.id!==r.id);
+    refresh();
+  };
+  return el;
+}
+
+/* ---------- card library (browse / edit / add by topic) ---------- */
+let libCurrent=null;   // {unit,aos,topic}
+
+function openLibrary(){
+  $("home").classList.add("hidden");
+  $("library").classList.remove("hidden");
+  showLibBrowse();
+}
+function exitLibrary(){
+  $("library").classList.add("hidden");
+  $("home").classList.remove("hidden");
+  loadAll();
+}
+function showLibBrowse(){
+  libCurrent=null;
+  $("libBrowse").classList.remove("hidden");
+  $("libTopic").classList.add("hidden");
+  $("libCrumb").textContent=currentSubject;
+  renderLibTree();
+}
+function renderLibTree(){
+  const tree={};
+  allRows.cloze.forEach(r=>{
+    const u=r.unit||"Other", a=r.aos||"", t=r.topic||"General";
+    tree[u]=tree[u]||{}; tree[u][a]=tree[u][a]||{}; tree[u][a][t]=tree[u][a][t]||[];
+    tree[u][a][t].push(r);
+  });
+  const box=$("libTree"); box.innerHTML="";
+  if(!allRows.cloze.length){box.innerHTML='<div class="empty">No cards in this subject yet.</div>';return;}
+  Object.keys(tree).sort().forEach(u=>{
+    Object.keys(tree[u]).sort().forEach(a=>{
+      const head=document.createElement("div");
+      head.className="nav-group-head";
+      head.innerHTML=`<span>${u}${a?" · "+a:""}</span>`;
+      box.appendChild(head);
+      Object.keys(tree[u][a]).sort().forEach(t=>{
+        const items=tree[u][a][t];
+        const el=document.createElement("div");
+        el.className="lib-topic";
+        el.innerHTML=`<span class="t-name">${t}</span><span class="t-count">${items.length} card${items.length===1?"":"s"}</span>`;
+        el.onclick=()=>openLibTopic(u,a,t);
+        box.appendChild(el);
+      });
+    });
+  });
+}
+function openLibTopic(unit,aos,topic){
+  libCurrent={unit,aos,topic};
+  $("libBrowse").classList.add("hidden");
+  $("libTopic").classList.remove("hidden");
+  $("libTopicName").textContent=topic;
+  $("libTopicMeta").textContent=[unit,aos].filter(Boolean).join(" · ");
+  $("libCrumb").textContent=`${currentSubject} · ${topic}`;
+  $("libNewText").value="";$("libAddMsg").textContent="";
+  renderLibCards();
+}
+function escHtml(s){return (s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");}
+function showBlanks(s){
+  // render [[answer]] as a highlighted chip so it's easy to read
+  return escHtml(s).replace(/\[\[(.*?)\]\]/g,'<span class="bl">$1</span>');
+}
+function libRows(){
+  if(!libCurrent)return [];
+  return allRows.cloze.filter(r=>(r.unit||"Other")===libCurrent.unit&&(r.aos||"")===libCurrent.aos&&(r.topic||"General")===libCurrent.topic);
+}
+function renderLibCards(){
+  const box=$("libCards");box.innerHTML="";
+  const rows=libRows();
+  if(!rows.length){box.innerHTML='<div class="empty">No cards here yet — add one below.</div>';return;}
+  rows.forEach(r=>{
+    const el=document.createElement("div");el.className="lib-card";
+    el.innerHTML=`<div class="c-text">${showBlanks(r.text)}</div>
+      <div class="c-actions">
+        <button class="ghost small lib-edit">Edit</button>
+        <button class="ghost small lib-del" style="color:var(--miss)">Delete</button>
+        <span class="c-box">box ${r.box||1}</span>
+      </div>`;
+    // edit
+    el.querySelector(".lib-edit").onclick=()=>{
+      el.innerHTML=`<textarea rows="4">${escHtml(r.text)}</textarea>
+        <div class="c-actions"><button class="lib-save">Save</button>
+        <button class="ghost small lib-cancel">Cancel</button></div>`;
+      const ta=el.querySelector("textarea");ta.focus();
+      el.querySelector(".lib-save").onclick=async()=>{
+        const text=ta.value.trim();
+        if(!text||!text.includes("[["))return alert("Keep at least one [[blank]].");
+        r.text=text;
+        if(db)await db.from("cloze").update({text}).eq("id",r.id);
+        renderLibCards();
+      };
+      el.querySelector(".lib-cancel").onclick=renderLibCards;
+    };
+    // delete
+    el.querySelector(".lib-del").onclick=async()=>{
+      if(!confirm("Delete this card permanently?"))return;
+      if(db)await db.from("cloze").delete().eq("id",r.id);
+      allRows.cloze=allRows.cloze.filter(x=>x.id!==r.id);
+      renderLibCards();
+    };
+    box.appendChild(el);
+  });
+}
+async function libAddCard(){
+  const text=$("libNewText").value.trim();
+  if(!text||!text.includes("[["))return $("libAddMsg").textContent="Add a sentence with at least one [[blank]].";
+  const {data:u}=await db.auth.getUser();
+  const row={user_id:u.user.id,subject:currentSubject,unit:libCurrent.unit,aos:libCurrent.aos||null,topic:libCurrent.topic,text,box:1};
+  if(hasDueColumn)row.due=new Date().toISOString();
+  let {data:ins,error}=await db.from("cloze").insert(row).select();
+  // If the DB doesn't have an optional column, drop it and retry once.
+  if(error&&/column/i.test(error.message||"")){
+    hasDueColumn=false;delete row.due;
+    ({data:ins,error}=await db.from("cloze").insert(row).select());
+  }
+  if(error)return $("libAddMsg").textContent="Error: "+error.message;
+  allRows.cloze.push((ins&&ins[0])||{...row,id:(ins&&ins[0]&&ins[0].id)||("tmp-"+Date.now())});
+  $("libNewText").value="";$("libAddMsg").textContent="Added ✓";
+  renderLibCards();
+}
+
+boot();
+</script>
+</body>
+</html>
