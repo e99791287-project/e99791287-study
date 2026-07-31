@@ -1,0 +1,2095 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Study System</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;450;500;600;700&display=swap');
+  /* ============================================================
+     Study System — dark UI, purple accent.
+     Flat surfaces, 1px borders, tight spacing, one typeface.
+     ============================================================ */
+  :root{
+    --bg0:#1a1230;          /* app background — deep purple */
+    --bg1:#241a42;          /* panel                 */
+    --bg2:#2d2153;          /* raised / input        */
+    --bg3:#372963;          /* hover                 */
+    --violet:#8b6cf0;
+    --violet-h:#9d82f5;
+    --violet-d:#7458d6;
+    --violet-soft:rgba(139,108,240,0.18);
+    --violet-softer:rgba(139,108,240,0.09);
+    --ink:#f0edfa;
+    --ink2:#c2bade;
+    --mute:#9089ad;
+    --lilac:#bda9f7;
+    --line:rgba(167,139,245,0.15);
+    --line2:rgba(167,139,245,0.26);
+    --good:#4fd6a5; --good-bg:rgba(79,214,165,0.14);  --good-bd:rgba(79,214,165,0.3);
+    --warn:#f0b45f; --warn-bg:rgba(240,180,95,0.14);  --warn-bd:rgba(240,180,95,0.3);
+    --miss:#f0768d; --miss-bg:rgba(240,118,141,0.14); --miss-bd:rgba(240,118,141,0.3);
+    --info:#6fa8f5; --info-bg:rgba(111,168,245,0.14); --info-bd:rgba(111,168,245,0.3);
+    --r:8px;
+    --shadow:0 1px 2px rgba(0,0,0,0.3);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{-webkit-text-size-adjust:100%}
+  body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+    font-size:14px;line-height:1.55;color:var(--ink);background:var(--bg0);min-height:100vh;
+    -webkit-font-smoothing:antialiased}
+  .wrap{max-width:1080px;margin:0 auto;padding:0 1.5rem}
+
+  /* ---------- header ---------- */
+  header.masthead{display:flex;align-items:center;gap:1rem;padding:1.1rem 0 0.9rem;
+    border-bottom:1px solid var(--line);margin-bottom:1.25rem;flex-wrap:wrap}
+  .brand{font-size:1.05rem;font-weight:650;letter-spacing:-0.01em;color:var(--ink);display:flex;align-items:center;gap:0.55rem}
+  .brand::before{content:"";width:26px;height:26px;border-radius:7px;flex-shrink:0;
+    background:linear-gradient(140deg,var(--violet),var(--violet-d));
+    box-shadow:inset 0 1px 0 rgba(255,255,255,0.18)}
+  .brand .dot{display:none}
+  .brand-sub{display:none}
+  .whoami{margin-left:auto;display:flex;align-items:center;gap:0.6rem;font-size:0.8rem;color:var(--mute)}
+  .whoami button{margin:0}
+
+  /* ---------- controls ---------- */
+  button{font-family:inherit;font-size:0.83rem;font-weight:500;line-height:1.2;
+    background:var(--violet);color:#fff;border:1px solid transparent;
+    padding:0.5rem 0.85rem;border-radius:var(--r);cursor:pointer;transition:background .12s,border-color .12s}
+  button:hover{background:var(--violet-h)}
+  button:active{background:var(--violet-d)}
+  button:disabled{opacity:0.4;cursor:not-allowed}
+  button:disabled:hover{background:var(--violet)}
+  button:focus-visible{outline:2px solid var(--violet-h);outline-offset:1px}
+  button.ghost{background:var(--bg2);color:var(--ink2);border-color:var(--line2)}
+  button.ghost:hover{background:var(--bg3);color:var(--ink)}
+  button.small{font-size:0.76rem;padding:0.32rem 0.6rem}
+
+  input,textarea,select{font-family:inherit;font-size:0.86rem;color:var(--ink);
+    background:var(--bg2);border:1px solid var(--line2);border-radius:var(--r);
+    padding:0.5rem 0.65rem;width:100%}
+  input::placeholder,textarea::placeholder{color:var(--mute)}
+  input:focus,textarea:focus,select:focus{outline:none;border-color:var(--violet);
+    box-shadow:0 0 0 3px var(--violet-soft)}
+  textarea{resize:vertical;line-height:1.6}
+  select{cursor:pointer}
+  label{display:block;font-size:0.76rem;font-weight:500;color:var(--ink2);margin-bottom:0.3rem}
+  .lbl-hint{font-weight:400;color:var(--mute)}
+
+  /* subject tabs — underline style */
+  nav.tabs{display:flex;gap:0.15rem;margin:0 0 1.1rem;border-bottom:1px solid var(--line);flex-wrap:wrap}
+  nav.tabs .tab{font-size:0.85rem;font-weight:500;color:var(--mute);padding:0.5rem 0.85rem;
+    cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;transition:color .12s}
+  nav.tabs .tab:hover{color:var(--ink2)}
+  nav.tabs .tab.active{color:var(--ink);border-bottom-color:var(--violet)}
+  nav.tabs .tab.disabled{opacity:0.4;cursor:not-allowed}
+  nav.tabs .tab.disabled:hover{color:var(--mute)}
+
+  /* segmented control */
+  .mode-switch{display:inline-flex;background:var(--bg2);border:1px solid var(--line2);
+    border-radius:var(--r);padding:2px;gap:2px;margin-bottom:1rem}
+  .mode-switch button{background:transparent;color:var(--mute);padding:0.35rem 0.8rem;font-size:0.8rem;border-radius:6px}
+  .mode-switch button:hover{background:var(--bg3);color:var(--ink2)}
+  .mode-switch button.active{background:var(--violet);color:#fff}
+  .mode-switch button.active:hover{background:var(--violet-h)}
+
+  /* ---------- panels ---------- */
+  .panel{background:var(--bg1);border:1px solid var(--line);border-radius:10px;
+    padding:1.1rem 1.25rem;margin-bottom:0.9rem}
+  .panel h2{font-size:0.98rem;font-weight:600;letter-spacing:-0.01em;color:var(--ink)}
+  .panel .meta,.meta{font-size:0.81rem;color:var(--mute);margin-top:0.15rem}
+
+  /* topic tree */
+  .nav-group{margin-bottom:0.85rem}
+  .nav-group-head{display:flex;align-items:center;gap:0.55rem;font-size:0.78rem;font-weight:600;
+    text-transform:uppercase;letter-spacing:0.04em;color:var(--mute);padding:0.3rem 0}
+  .nav-group-head .aos-select{font-size:0.7rem;font-weight:500;text-transform:none;letter-spacing:0;
+    color:var(--lilac);border:1px solid var(--line2);border-radius:5px;padding:0.1rem 0.4rem;
+    background:var(--bg2);cursor:pointer}
+  .nav-group-head .aos-select:hover{background:var(--bg3)}
+  .topic-chips{display:flex;flex-wrap:wrap;gap:0.35rem;margin:0.25rem 0 0.3rem}
+  .topic-chip{font-size:0.8rem;padding:0.35rem 0.65rem;border-radius:6px;border:1px solid var(--line2);
+    background:var(--bg2);color:var(--ink2);cursor:pointer;display:inline-flex;align-items:center;
+    gap:0.4rem;user-select:none;transition:background .12s,border-color .12s}
+  .topic-chip:hover{background:var(--bg3);border-color:var(--line2)}
+  .topic-chip.selected{background:var(--violet-soft);color:var(--lilac);border-color:var(--violet)}
+  .topic-chip .check{width:13px;height:13px;border-radius:3px;border:1px solid var(--line2);
+    display:inline-flex;align-items:center;justify-content:center;font-size:0.6rem;background:var(--bg1)}
+  .topic-chip.selected .check{background:var(--violet);border-color:var(--violet);color:#fff}
+  .topic-chip .count{font-size:0.72rem;color:var(--mute)}
+  .topic-chip .mastered-pip{width:5px;height:5px;border-radius:50%;background:var(--good)}
+
+  /* action bar */
+  .start-bar{display:flex;align-items:center;gap:0.55rem;background:var(--bg1);
+    border:1px solid var(--line);border-radius:10px;padding:0.65rem 0.9rem;margin-bottom:0.9rem;flex-wrap:wrap}
+  .start-bar .sel-count{font-size:0.81rem;color:var(--ink2)}
+  .start-bar .spacer{margin-left:auto}
+  .count-pills{display:flex;align-items:center;gap:0.3rem;flex-wrap:wrap;margin-bottom:0.7rem}
+  .count-pills .count-label{font-size:0.79rem;color:var(--mute);margin-right:0.2rem}
+  .count-pill{font-size:0.78rem;padding:0.3rem 0.6rem;border-radius:6px;border:1px solid var(--line2);
+    background:var(--bg2);color:var(--ink2)}
+  .count-pill:hover{background:var(--bg3);color:var(--ink)}
+  .count-pill.active{background:var(--violet);color:#fff;border-color:var(--violet)}
+  .count-pill.active:hover{background:var(--violet-h)}
+
+  /* ---------- progress ---------- */
+  .prog-today{display:flex;gap:0.6rem;flex-wrap:wrap;margin-bottom:0.9rem}
+  .prog-stat{flex:1;min-width:110px;background:var(--bg2);border:1px solid var(--line);
+    border-radius:8px;padding:0.7rem 0.85rem}
+  .prog-stat .num{font-size:1.5rem;font-weight:650;color:var(--ink);line-height:1.1;letter-spacing:-0.02em}
+  .prog-stat .lbl{font-size:0.74rem;color:var(--mute);margin-top:0.2rem}
+  .prog-bars{margin-top:0.3rem}
+  .prog-day{display:flex;align-items:center;gap:0.6rem;margin-bottom:0.3rem}
+  .prog-day .day-lbl{font-size:0.76rem;color:var(--mute);width:52px;flex-shrink:0}
+  .prog-day .day-track{flex:1;height:14px;background:var(--bg2);border-radius:4px;overflow:hidden;border:1px solid var(--line)}
+  .prog-day .day-fill{height:100%;background:var(--violet);border-radius:3px;min-width:2px}
+  .prog-day .day-num{font-size:0.76rem;color:var(--ink2);width:28px;text-align:right}
+  .prog-due{margin-top:0.8rem;font-size:0.82rem;color:var(--ink2)}
+  .prog-due b{color:var(--lilac);font-weight:600}
+
+  /* ---------- study screen ---------- */
+  .study-screen{min-height:100vh;display:flex;flex-direction:column;padding-bottom:2rem}
+  .study-top{display:flex;align-items:center;gap:0.9rem;padding:1rem 0;flex-wrap:wrap}
+  .study-progress{margin-left:auto;display:flex;align-items:center;gap:0.7rem;font-size:0.81rem;color:var(--mute)}
+  .study-clock{font-variant-numeric:tabular-nums;font-size:0.88rem;color:var(--ink2)}
+  .prog-track{height:3px;background:var(--line);border-radius:2px;overflow:hidden;margin-bottom:1.1rem}
+  .prog-fill{height:100%;background:var(--violet);width:0%;transition:width .25s}
+
+  .study-card{position:relative;flex:1;display:flex;flex-direction:column;justify-content:center;
+    background:var(--bg1);border:1px solid var(--line);border-radius:10px;padding:2rem 1.9rem;min-height:320px}
+  .edit-btn{position:absolute;top:0.85rem;left:0.85rem;font-size:0.74rem;padding:0.28rem 0.55rem;
+    background:var(--bg2);color:var(--ink2);border-color:var(--line2)}
+  .edit-btn:hover{background:var(--bg3);color:var(--ink)}
+  .study-eyebrow{font-size:0.76rem;color:var(--mute);margin-bottom:1rem;display:flex;align-items:center;
+    gap:0.5rem;flex-wrap:wrap}
+  .cloze-text{font-size:1.05rem;line-height:1.85;color:var(--ink);white-space:pre-wrap}
+  .cloze-text b{color:var(--lilac);font-weight:600}
+  .blank-input{display:inline-block;width:auto;font-size:0.95rem;color:var(--ink);
+    background:var(--bg2);border:1px solid var(--line2);border-bottom:2px solid var(--violet);
+    border-radius:5px;padding:0.1rem 0.5rem;margin:0 0.15rem;min-width:82px;text-align:center}
+  .blank-input:focus{background:var(--bg3);border-bottom-color:var(--violet-h);box-shadow:none}
+  .blank-input.correct{background:var(--good-bg);border-color:var(--good-bd);border-bottom-color:var(--good);color:var(--good)}
+  .blank-input.wrong{background:var(--miss-bg);border-color:var(--miss-bd);border-bottom-color:var(--miss);color:var(--miss)}
+  .answer-reveal{margin-top:1.2rem;padding-top:0.95rem;border-top:1px solid var(--line)}
+  .answer-reveal .lbl{font-size:0.74rem;color:var(--mute);margin-bottom:0.4rem}
+  .answer-list{display:flex;flex-wrap:wrap;gap:0.35rem}
+  .answer-pill{font-size:0.85rem;background:var(--good-bg);color:var(--good);
+    border:1px solid var(--good-bd);border-radius:5px;padding:0.2rem 0.55rem}
+  .fc-face{font-size:1.1rem;line-height:1.6;color:var(--ink);text-align:center;width:100%}
+  .fc-face b{color:var(--lilac)}
+  .fc-side{font-size:0.74rem;color:var(--mute);text-align:center;margin-bottom:0.8rem}
+
+  .mark-row{display:flex;gap:0.5rem;justify-content:center;margin-top:1.4rem;flex-wrap:wrap}
+  .mark-row button{min-width:120px}
+  .mark-right{background:var(--good);border-color:transparent}
+  .mark-right:hover{background:#3fa375}
+  .mark-wrong{background:var(--miss);border-color:transparent}
+  .mark-wrong:hover{background:#c44a60}
+  .kbd-hint{text-align:center;margin-top:0.85rem;font-size:0.78rem;color:var(--mute)}
+  .kbd{display:inline-block;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:0.72rem;
+    background:var(--bg2);border:1px solid var(--line2);border-radius:4px;padding:0.05rem 0.35rem;
+    color:var(--ink2);margin:0 0.1rem}
+  .box-pips{display:inline-flex;align-items:center;gap:2px}
+  .box-pips .lbl{font-size:0.7rem;color:var(--mute);margin-right:2px}
+  .pip{width:6px;height:6px;border-radius:50%;background:var(--line2)}
+  .pip.on{background:var(--warn)}
+  .pip.on.mastered{background:var(--good)}
+  .edit-panel{margin-top:1rem;padding-top:0.9rem;border-top:1px solid var(--line)}
+  .delete-confirm{margin-top:0.85rem;text-align:center;font-size:0.81rem;color:var(--miss);
+    background:var(--miss-bg);border:1px solid var(--miss-bd);border-radius:8px;padding:0.55rem}
+
+  /* ---------- forms ---------- */
+  .add-form{margin-top:0.55rem}
+  .add-form textarea,.add-form input,.auth input{margin-bottom:0.55rem}
+  .auth-screen{max-width:360px;margin:5rem auto;background:var(--bg1);border:1px solid var(--line);
+    border-radius:10px;padding:1.7rem 1.6rem}
+  .auth-screen h1{font-size:1.3rem;font-weight:650;letter-spacing:-0.01em;color:var(--ink)}
+  .auth-screen .lede{font-size:0.85rem;color:var(--mute);margin:0.25rem 0 1.1rem}
+  .auth .row{display:flex;gap:0.4rem;margin-top:0.2rem}
+  .auth .row button{flex:1}
+  .auth .msg{font-size:0.8rem;margin-top:0.75rem;padding:0.5rem 0.65rem;border-radius:6px;display:none}
+  .auth .msg.show{display:block}
+  .auth .msg.err{background:var(--miss-bg);color:var(--miss);border:1px solid var(--miss-bd)}
+  .auth .msg.ok{background:var(--good-bg);color:var(--good);border:1px solid var(--good-bd)}
+
+  .empty{text-align:center;padding:1.8rem 1rem;color:var(--mute);font-size:0.85rem}
+  .empty .big{font-size:0.95rem;font-weight:600;color:var(--ink2);margin-bottom:0.2rem}
+  .hidden{display:none!important}
+  .banner{background:var(--warn-bg);border:1px solid var(--warn-bd);border-radius:8px;
+    padding:0.6rem 0.8rem;font-size:0.82rem;color:var(--ink2);margin-bottom:0.9rem}
+  .banner code{color:var(--warn);font-family:ui-monospace,monospace;font-size:0.78rem}
+  .session-done{text-align:center;padding:2.5rem 1rem}
+  .session-done .big{font-size:1.2rem;font-weight:650;color:var(--ink);margin-bottom:0.35rem}
+  .session-done .stats{font-size:0.85rem;color:var(--mute);margin-bottom:1.2rem}
+  footer{display:none}
+
+  /* ---------- word game ---------- */
+  .wordlist-item,.passage-item{display:flex;align-items:center;gap:0.6rem;padding:0.6rem 0.8rem;
+    border:1px solid var(--line);border-radius:8px;background:var(--bg2);margin-bottom:0.4rem;cursor:pointer}
+  .wordlist-item:hover,.passage-item:hover{background:var(--bg3);border-color:var(--line2)}
+  .wordlist-item .w-name,.passage-item .p-label{font-weight:550;font-size:0.88rem;color:var(--ink)}
+  .wordlist-item .w-count,.passage-item .p-text{font-size:0.79rem;color:var(--mute)}
+  .wordlist-item .w-play{margin-left:auto;font-size:0.79rem;color:var(--lilac)}
+  .wordlist-item .w-del,.passage-item .p-del{font-size:0.72rem;padding:0.2rem 0.45rem;
+    background:transparent;border:1px solid var(--line2);color:var(--miss)}
+  .wordlist-item .w-del:hover{background:var(--miss-bg)}
+  #game{min-height:100vh;display:flex;flex-direction:column;padding-bottom:2rem}
+  .game-hud{display:flex;align-items:center;gap:0.7rem;margin-left:auto;font-size:0.85rem}
+  .game-lives{letter-spacing:1px}
+  .game-score{color:var(--lilac);font-weight:600;font-variant-numeric:tabular-nums}
+  .game-field{position:relative;flex:1;min-height:420px;background:var(--bg1);
+    border:1px solid var(--line);border-radius:10px;overflow:hidden}
+  .falling-word{position:absolute;font-size:1.05rem;font-weight:550;color:var(--ink);
+    padding:0.28rem 0.6rem;background:var(--bg2);border:1px solid var(--line2);
+    border-radius:6px;white-space:nowrap;transform:translateX(-50%)}
+  .game-input{position:absolute;left:50%;bottom:1.1rem;transform:translateX(-50%);width:min(420px,80%);
+    text-align:center;font-size:0.95rem}
+  .recall-timer{font-size:2rem;font-weight:650;color:var(--lilac);text-align:center;
+    margin-bottom:0.7rem;font-variant-numeric:tabular-nums}
+  .recall-timer.low{color:var(--miss)}
+  .recall-found{display:flex;flex-wrap:wrap;gap:0.3rem;justify-content:center;margin-top:0.6rem}
+  .recall-hit{font-size:0.8rem;background:var(--good-bg);color:var(--good);
+    border:1px solid var(--good-bd);border-radius:5px;padding:0.15rem 0.5rem}
+  .recall-miss{font-size:0.8rem;color:var(--mute)}
+  @keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
+  .shake{animation:shake .22s}
+
+  /* ---------- library / cards ---------- */
+  .lib-topic{display:flex;align-items:center;gap:0.55rem;padding:0.6rem 0.8rem;border:1px solid var(--line);
+    border-radius:8px;background:var(--bg2);margin-bottom:0.4rem;cursor:pointer}
+  .lib-topic:hover{background:var(--bg3);border-color:var(--line2)}
+  .lib-topic .t-name{flex:1;font-size:0.88rem;color:var(--ink)}
+  .lib-topic .t-count{font-size:0.77rem;color:var(--mute)}
+  .lib-card{border:1px solid var(--line);border-radius:8px;background:var(--bg2);
+    padding:0.7rem 0.85rem;margin-bottom:0.45rem}
+  .lib-card .c-text{font-size:0.88rem;line-height:1.6;color:var(--ink);white-space:pre-wrap;margin-bottom:0.5rem}
+  .lib-card .c-text .bl{background:var(--violet-soft);color:var(--lilac);border-radius:3px;
+    padding:0 0.25rem;font-weight:500}
+  .lib-card .c-actions{display:flex;gap:0.35rem;align-items:center}
+  .lib-card textarea{margin-bottom:0.45rem}
+  .lib-card.selectable{display:flex;gap:0.6rem;align-items:flex-start;cursor:pointer}
+  .lib-card.selectable:hover{border-color:var(--line2);background:var(--bg3)}
+  .lib-card.selectable .c-main{flex:1;min-width:0}
+  .lib-card .c-pick{width:16px;height:16px;flex-shrink:0;border:1px solid var(--line2);border-radius:4px;
+    background:var(--bg1);display:flex;align-items:center;justify-content:center;font-size:0.65rem;
+    color:#fff;margin-top:0.15rem}
+  .lib-card.sel{border-color:var(--violet);background:var(--violet-softer)}
+  .lib-card.sel .c-pick{background:var(--violet);border-color:var(--violet)}
+
+  /* ---------- notes ---------- */
+  .notes-head{display:flex;align-items:flex-start;gap:0.9rem;flex-wrap:wrap;margin-bottom:0.9rem}
+  .notes-head h2{font-size:1.1rem;font-weight:650;letter-spacing:-0.01em;color:var(--ink)}
+  .notes-modes{margin-left:auto;display:inline-flex;background:var(--bg2);border:1px solid var(--line2);
+    border-radius:var(--r);padding:2px;gap:2px}
+  .mode-pill{background:transparent;color:var(--mute);font-size:0.79rem;padding:0.3rem 0.75rem;border-radius:6px}
+  .mode-pill:hover{background:var(--bg3);color:var(--ink2)}
+  .mode-pill.active{background:var(--violet);color:#fff}
+  .note-sec{background:var(--bg1);border:1px solid var(--line);border-radius:10px;
+    padding:1.1rem 1.25rem;margin-bottom:0.8rem}
+  .note-dp{display:flex;align-items:flex-start;gap:0.5rem;font-size:0.8rem;color:var(--ink2);
+    line-height:1.5;padding-bottom:0.65rem;margin-bottom:0.85rem;border-bottom:1px solid var(--line)}
+  .note-dp::before{content:none}
+  .dp-num{display:inline-flex;align-items:center;justify-content:center;min-width:19px;height:19px;
+    border-radius:5px;background:var(--violet-soft);color:var(--lilac);font-weight:600;
+    font-size:0.72rem;flex-shrink:0;border:1px solid var(--line2)}
+  .note-body{font-size:0.9rem;line-height:1.7;color:var(--ink2)}
+  .note-body h4{font-size:0.9rem;font-weight:600;color:var(--ink);margin:0.95rem 0 0.3rem}
+  .note-body h4:first-child{margin-top:0}
+  .note-body p{margin:0.35rem 0}
+  .note-body ul{margin:0.15rem 0 0.4rem;padding-left:1.15rem;list-style:none}
+  .note-body li{position:relative;margin:0.18rem 0}
+  .note-body ul.lvl1>li::before{content:"";width:4px;height:4px;border-radius:50%;background:var(--violet);
+    position:absolute;margin-left:-0.95rem;top:0.62em}
+  .note-body ul.lvl2>li::before{content:"";width:4px;height:4px;border-radius:50%;border:1px solid var(--lilac);
+    position:absolute;margin-left:-0.95rem;top:0.6em}
+  .note-body ul.lvl3>li::before{content:"";width:4px;height:1.5px;background:var(--mute);
+    position:absolute;margin-left:-0.95rem;top:0.75em}
+  .note-body ul ul{margin-left:0.3rem}
+  .note-body strong{color:var(--ink);font-weight:600}
+  .note-body .note-warn,.note-body p.note-warn,.note-body h4.note-warn{background:var(--warn-bg);
+    border-left:2px solid var(--warn);border-radius:0 6px 6px 0;padding:0.45rem 0.7rem;color:var(--warn)}
+  .note-body[contenteditable="true"]{outline:none;border:1px solid var(--violet);border-radius:8px;
+    padding:0.7rem;background:var(--bg2)}
+  .note-toolbar{display:none;flex-wrap:wrap;gap:0.25rem;margin-bottom:0.6rem;padding:0.4rem;
+    background:var(--bg2);border:1px solid var(--line2);border-radius:8px}
+  .editing .note-toolbar{display:flex}
+  .note-toolbar button{background:var(--bg1);color:var(--ink2);border:1px solid var(--line2);
+    font-size:0.76rem;padding:0.25rem 0.5rem;border-radius:5px;min-width:28px}
+  .note-toolbar button:hover{background:var(--bg3);color:var(--ink)}
+  .note-toolbar .sep{width:1px;background:var(--line2);margin:0 0.2rem}
+  .note-toolbar select{width:auto;font-size:0.76rem;padding:0.25rem 0.4rem;background:var(--bg1)}
+  .note-save{margin-top:0.7rem;display:none;gap:0.4rem}
+  .editing .note-save{display:flex}
+  .note-saved{font-size:0.78rem;color:var(--good);align-self:center}
+  .note-cards{margin-top:1.1rem;padding-top:0.85rem;border-top:1px solid var(--line)}
+  .note-cards-head{display:flex;align-items:center;gap:0.45rem;cursor:pointer;font-size:0.77rem;
+    font-weight:500;color:var(--mute)}
+  .note-cards-head:hover{color:var(--ink2)}
+  .note-cards-head .chev{transition:transform .12s;font-size:0.7rem}
+  .note-cards.open .chev{transform:rotate(90deg)}
+  .note-cards-body{display:none;margin-top:0.7rem}
+  .note-cards.open .note-cards-body{display:block}
+  .nc-empty{font-size:0.82rem;color:var(--mute);padding:0.4rem 0}
+  .nc-addwrap{margin-top:0.6rem}
+  .nc-open{font-size:0.78rem;padding:0.32rem 0.7rem}
+  .nc-addwrap.open .nc-open{display:none}
+  .nc-form{display:none;margin-top:0.15rem}
+  .nc-addwrap.open .nc-form{display:block}
+
+  /* bulk linking */
+  .link-help{font-size:0.82rem;color:var(--mute);margin-bottom:0.6rem}
+  .link-bar{display:flex;align-items:center;gap:0.4rem;flex-wrap:wrap;background:var(--bg2);
+    border:1px solid var(--line2);border-radius:8px;padding:0.5rem 0.7rem;margin-bottom:0.75rem;
+    position:sticky;top:0.5rem;z-index:5}
+  .link-count{font-size:0.79rem;color:var(--ink2);min-width:70px}
+  .link-sep{width:1px;height:16px;background:var(--line2);margin:0 0.25rem}
+  .link-to{font-size:0.77rem;color:var(--mute)}
+  .link-chips{display:flex;gap:0.25rem;flex-wrap:wrap}
+  .link-chip{min-width:26px;padding:0.25rem 0.45rem;font-size:0.78rem;font-weight:600;
+    background:var(--bg1);color:var(--lilac);border:1px solid var(--line2);border-radius:5px}
+  .link-chip:hover:not(:disabled){background:var(--violet);color:#fff;border-color:var(--violet)}
+  .link-chip:disabled{opacity:0.3}
+
+  /* ---------- quotes ---------- */
+  .q-actions{display:flex;align-items:center;gap:0.45rem;flex-wrap:wrap;margin-top:0.8rem}
+  .q-scope{font-size:0.79rem;color:var(--ink2);background:var(--bg2);border:1px solid var(--line2);
+    border-radius:6px;padding:0.25rem 0.55rem}
+  .q-tags{display:flex;gap:0.6rem;flex-wrap:wrap;margin:0.55rem 0}
+  .q-tags>div{flex:1;min-width:165px}
+  .chip-box{display:flex;flex-wrap:wrap;gap:0.25rem;margin-top:0.4rem;min-height:2px}
+  .sel-chip{display:inline-flex;align-items:center;gap:0.3rem;font-size:0.76rem;padding:0.18rem 0.45rem;
+    border-radius:5px;background:var(--violet-soft);color:var(--lilac);border:1px solid var(--line2)}
+  .sel-chip .x{cursor:pointer;opacity:0.55;font-weight:600}
+  .sel-chip .x:hover{opacity:1;color:var(--miss)}
+  .tag-types{display:flex;gap:0.3rem;flex-wrap:wrap;margin:0.8rem 0 0.55rem}
+  .tag-type{background:var(--bg2);color:var(--ink2);border:1px solid var(--line2);font-size:0.82rem}
+  .tag-type:hover{background:var(--bg3);color:var(--ink)}
+  .tag-type.active{background:var(--violet);color:#fff;border-color:var(--violet)}
+  .tag-values{display:flex;gap:0.3rem;flex-wrap:wrap;margin-bottom:0.6rem}
+  .tag-val{font-size:0.79rem;padding:0.28rem 0.6rem;border-radius:6px;border:1px solid var(--line2);
+    background:var(--bg2);color:var(--ink2);cursor:pointer;display:inline-flex;gap:0.35rem;align-items:center}
+  .tag-val:hover{background:var(--bg3);color:var(--ink)}
+  .tag-val.active{background:var(--violet);color:#fff;border-color:var(--violet)}
+  .tag-val .n{color:var(--mute);font-size:0.72rem}
+  .tag-val.active .n{color:rgba(255,255,255,0.7)}
+  .tag-quotes{margin-top:0.4rem}
+  .q-item{border:1px solid var(--line);border-radius:8px;background:var(--bg2);
+    padding:0.7rem 0.85rem;margin-bottom:0.45rem}
+  .q-item .q-text{font-size:0.92rem;line-height:1.5;color:var(--ink)}
+  .q-item .q-meta{display:flex;gap:0.3rem;flex-wrap:wrap;margin-top:0.45rem;align-items:center}
+  .q-chip{font-size:0.72rem;padding:0.12rem 0.45rem;border-radius:4px;background:var(--violet-soft);
+    color:var(--lilac);border:1px solid var(--line2)}
+  .q-chip.ch-char{background:var(--good-bg);color:var(--good);border-color:var(--good-bd)}
+  .q-chip.ch-act{background:var(--info-bg);color:var(--info);border-color:var(--info-bd)}
+  .q-item .q-ops{margin-left:auto;display:flex;gap:0.25rem}
+  .q-item .q-miss{font-size:0.73rem;color:var(--mute)}
+  .idea-lbl{font-size:0.76rem;color:var(--mute);text-align:center;margin-bottom:0.6rem}
+  .idea-prompt{font-size:1.05rem;line-height:1.55;color:var(--ink);text-align:center;margin-bottom:1rem}
+  .idea-input{font-size:0.95rem;line-height:1.6;padding:0.75rem}
+  .idea-answer{margin-top:1rem;padding-top:0.85rem;border-top:1px solid var(--line)}
+  .idea-answer .full{font-size:1rem;line-height:1.55;color:var(--good)}
+
+  @media(max-width:640px){
+    .wrap{padding:0 1rem}
+    .study-card{padding:1.4rem 1.1rem}
+    .prog-stat{min-width:90px}
+  }
+  @media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+<script src="config.js"></script>
+<div class="wrap">
+
+  <!-- AUTH -->
+  <div id="authScreen" class="auth-screen hidden">
+    <h1>Study System</h1>
+    <p class="lede">Sign in to continue.</p>
+    <div class="auth">
+      <input id="email" type="email" placeholder="email" autocomplete="username">
+      <input id="password" type="password" placeholder="password" autocomplete="current-password">
+      <div class="row"><button id="signInBtn">Sign in</button><button id="signUpBtn" class="ghost">Create account</button></div>
+      <div id="authMsg" class="msg"></div>
+    </div>
+  </div>
+
+  <!-- PICKER (home) -->
+  <div id="home" class="hidden">
+    <header class="masthead">
+      <div class="brand">Study System</div>
+      <div class="whoami"><span id="userEmail"></span><button class="ghost small" id="signOutBtn">Sign out</button></div>
+    </header>
+    <nav class="tabs" id="tabs">
+      <div class="tab active" data-subject="Chemistry">Chemistry</div>
+      <div class="tab" data-subject="Algorithmics">Algorithmics</div>
+      <div class="tab" data-subject="English">English</div>
+    </nav>
+    <div id="configWarn" class="banner hidden">Config not set. Open <code>config.js</code> and paste your Supabase <code>Project URL</code> and <code>anon key</code> into it.</div>
+
+    <div class="mode-switch" id="modeSwitch">
+      <button class="active" data-mode="cloze">Fill in the blanks</button>
+      <button data-mode="mc" disabled title="coming soon">Multiple choice · soon</button>
+    </div>
+
+    <div id="clozeHome">
+    <div class="panel">
+      <h2>Choose what to study</h2>
+      <div class="meta">Tap topics to select — pick one, several, or a whole area of study. Then start.</div>
+      <div id="navTree" style="margin-top:1rem;"></div>
+    </div>
+
+    <div class="count-pills" id="countPills">
+      <span class="count-label">How many:</span>
+      <button class="count-pill active" data-count="all">All</button>
+      <button class="count-pill" data-count="5">5</button>
+      <button class="count-pill" data-count="10">10</button>
+      <button class="count-pill" data-count="15">15</button>
+      <button class="count-pill" data-count="20">20</button>
+    </div>
+
+    <div class="start-bar" id="startBar">
+      <span class="sel-count" id="selCount">0 selected</span>
+      <button class="ghost small" id="clearSel">Clear</button>
+      <div class="spacer"></div>
+      <button class="ghost" id="notesBtn">Notes</button>
+      <button class="ghost" id="libraryBtn">Edit cards</button>
+      <button id="startBtn" disabled>Start studying →</button>
+    </div>
+    </div>
+
+    <div id="englishHome" class="hidden">
+      <div class="mode-switch" id="engModeSwitch">
+        <button class="active" data-emode="game">Word game</button>
+        <button data-emode="quotes">Quotes</button>
+      </div>
+
+      <div id="engQuotes" class="hidden">
+        <div class="panel">
+          <h2>Twelfth Night quotes</h2>
+          <div class="meta">Fill in the blanks, or write the quote from an idea. Browse by tag to focus a session.</div>
+          <div class="q-actions">
+            <button id="qStudyBlanks">Fill in the blanks →</button>
+            <button id="qStudyIdea">From an idea →</button>
+            <span class="q-scope" id="qScope">all quotes</span>
+            <button class="ghost small hidden" id="qClearScope">Clear filter</button>
+          </div>
+        </div>
+
+        <div class="panel">
+          <h2>Browse by tag</h2>
+          <div class="meta">Pick a tag type, then a value, to see every quote with it.</div>
+          <div class="tag-types" id="tagTypes">
+            <button class="tag-type" data-tt="themes">Themes</button>
+            <button class="tag-type" data-tt="characters">Characters</button>
+            <button class="tag-type" data-tt="act">Act</button>
+          </div>
+          <div id="tagValues" class="tag-values"></div>
+          <div id="tagQuotes" class="tag-quotes"></div>
+        </div>
+
+        <div class="panel">
+          <h2 id="qFormTitle">Add a quote</h2>
+          <div class="meta">Tags autofill if the quote already exists.</div>
+          <div class="add-form">
+            <label>Quote</label>
+            <textarea id="qQuote" rows="2" placeholder="If music be the food of love, play on"></textarea>
+            <label>Fill-in-the-blank version <span class="lbl-hint">— mark blanks with [[double brackets]]</span></label>
+            <textarea id="qCloze" rows="2" placeholder="If [[music]] be the food of [[love]], play on"></textarea>
+            <button class="ghost small" id="qAutoBlank" type="button">Auto-blank from quote</button>
+            <label style="margin-top:0.7rem">Idea / prompt <span class="lbl-hint">— what should trigger this quote?</span></label>
+            <textarea id="qIdea" rows="2" placeholder="Orsino opens the play indulging in his own lovesickness"></textarea>
+            <div class="q-tags">
+              <div>
+                <label>Themes</label>
+                <select id="qThemeSel"></select>
+                <div class="chip-box" id="qThemeChips"></div>
+              </div>
+              <div>
+                <label>Characters</label>
+                <select id="qCharSel"></select>
+                <div class="chip-box" id="qCharChips"></div>
+              </div>
+              <div>
+                <label>Act</label>
+                <select id="qActSel"></select>
+              </div>
+            </div>
+            <button id="qSave">Save quote</button>
+            <button class="ghost small hidden" id="qCancelEdit">Cancel edit</button>
+            <span id="qMsg" style="font-size:0.76rem;margin-left:0.6rem;color:var(--good)"></span>
+          </div>
+        </div>
+      </div>
+
+      <div id="engGame">
+      <div class="panel">
+        <h2>Word game</h2>
+        <div class="meta">Words fall from the top — type each one before it hits the bottom. 3 lives, then a 30-second recall round.</div>
+        <div id="wordlistList" style="margin-top:1rem;"></div>
+      </div>
+      <div class="panel">
+        <h2>Add a word list</h2>
+        <div class="meta">e.g. tone words. Separate words with commas or new lines.</div>
+        <div class="add-form">
+          <label>List name</label>
+          <input id="wlName" placeholder="e.g. Tone words">
+          <label>Words</label>
+          <textarea id="wlWords" rows="4" placeholder="wistful, sardonic, elegiac, defiant ..."></textarea>
+          <button id="addWlBtn">Add word list</button>
+          <span id="wlMsg" style="font-size:0.76rem;margin-left:0.6rem;color:var(--good)"></span>
+        </div>
+      </div>
+      </div>
+    </div>
+
+    <div class="panel" id="progressPanel">
+      <h2>Your progress</h2>
+      <div class="meta" id="progressMeta">Reviews you've done — today and recently</div>
+      <div id="progressBody" style="margin-top:1rem;"></div>
+    </div>
+
+  </div>
+
+  <!-- NOTES -->
+  <div id="notes" class="hidden">
+    <div class="study-top">
+      <button class="ghost small" id="notesExit">← Back</button>
+      <div class="study-progress"><span id="notesCrumb"></span></div>
+    </div>
+
+    <div id="notesBrowse">
+      <div class="panel">
+        <h2>Notes</h2>
+        <div class="meta">Pick a topic to read its notes, organised by dot point.</div>
+        <div id="notesTree" style="margin-top:1rem;"></div>
+      </div>
+    </div>
+
+    <div id="notesTopic" class="hidden">
+      <div class="notes-head">
+        <div>
+          <h2 id="notesTopicName"></h2>
+          <div class="meta" id="notesTopicMeta"></div>
+        </div>
+        <div class="notes-modes">
+          <button class="mode-pill active" id="modeRead">Read</button>
+          <button class="mode-pill" id="modeEdit">Edit</button>
+        </div>
+      </div>
+      <div id="notesSections"></div>
+    </div>
+  </div>
+
+  <!-- CARD LIBRARY -->
+  <div id="library" class="hidden">
+    <div class="study-top">
+      <button class="ghost small" id="libExit">← Back</button>
+      <div class="study-progress"><span id="libCrumb"></span></div>
+    </div>
+
+    <!-- topic browser -->
+    <div id="libBrowse">
+      <div class="panel">
+        <h2>Edit cards</h2>
+        <div class="meta">Pick a topic to view, edit, or add cards.</div>
+        <div id="libTree" style="margin-top:1rem;"></div>
+      </div>
+    </div>
+
+    <!-- cards within a topic -->
+    <div id="libTopic" class="hidden">
+      <div class="panel">
+        <h2 id="libTopicName"></h2>
+        <div class="meta" id="libTopicMeta"></div>
+        <div id="libCards" style="margin-top:1rem;"></div>
+      </div>
+      <div class="panel">
+        <h2>Add a card to this topic</h2>
+        <div class="meta">Unit, area of study and topic are set from where you are.</div>
+        <div class="add-form">
+          <label>Sentence — mark blanks with [[double brackets]]</label>
+          <textarea id="libNewText" rows="3" placeholder="e.g. Oxidation occurs at the [[anode]]."></textarea>
+          <button id="libAddBtn">Add card</button>
+          <span id="libAddMsg" style="font-size:0.76rem;margin-left:0.6rem;color:var(--good)"></span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- WORD GAME SCREEN -->
+  <div id="game" class="hidden">
+    <div class="study-top">
+      <button class="ghost small" id="gameExit">← Exit</button>
+      <div class="study-progress">
+        <span id="gameLives">❤️❤️❤️</span>
+        <span id="gameScore">0</span>
+      </div>
+    </div>
+    <div class="game-field" id="gameField">
+      <input id="gameInput" class="game-input" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="type here…">
+    </div>
+    <!-- recall stage -->
+    <div id="recallStage" class="hidden">
+      <div class="study-card">
+        <div class="study-eyebrow">Stage 2 · Active recall</div>
+        <div id="recallTimer" class="recall-timer">0:30</div>
+        <div class="meta" style="text-align:center;margin-bottom:0.8rem">Type a word from the list and press Enter. Any word in the list counts.</div>
+        <input id="recallInput" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="type a word, press Enter" style="width:100%;font-family:'Inter',sans-serif;font-size:1.1rem;text-align:center;padding:0.8rem;border:1px solid var(--line2);border-radius:12px;background:var(--bg2);color:var(--ink)">
+        <div id="recallCount" style="text-align:center;font-size:0.8rem;color:var(--mute);margin-top:0.8rem"></div>
+        <div id="recallFound" class="recall-found"></div>
+        <div class="mark-row"><button id="recallDone">Finish now</button></div>
+      </div>
+    </div>
+    <!-- game over / results -->
+    <div id="gameResults" class="hidden">
+      <div class="study-card">
+        <div id="gameResultsBody"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- STUDY SCREEN -->
+  <div id="study" class="study-screen hidden">
+    <div class="study-top">
+      <button class="ghost small exit" id="exitStudy">← Exit</button>
+      <div class="study-progress">
+        <span class="study-clock" id="studyClock">00:00</span>
+        <span id="studyCount">0 / 0</span>
+      </div>
+    </div>
+    <div class="prog-track"><div class="prog-fill" id="progFill"></div></div>
+
+    <div class="study-card" id="studyCard">
+      <button class="edit-btn" id="editBtn">Edit</button>
+      <div class="study-eyebrow" id="studyEyebrow"></div>
+      <div id="studyBody"></div>
+      <div class="answer-reveal hidden" id="answerReveal">
+        <div class="lbl">Answer</div>
+        <div class="answer-list" id="answerList"></div>
+      </div>
+      <div class="mark-row hidden" id="markRow">
+        <button class="mark-right" id="markRight">Got it ✓</button>
+        <button class="mark-wrong" id="markWrong">Missed it ✗</button>
+      </div>
+      <div class="kbd-hint" id="kbdHint"></div>
+
+      <div class="delete-confirm hidden" id="deleteConfirm">
+        Delete this card? <span class="kbd">Enter</span> to confirm · <span class="kbd">Esc</span> to cancel
+      </div>
+
+      <div class="edit-panel hidden" id="editPanel">
+        <div class="lbl" style="font-size:0.7rem;text-transform:uppercase;color:var(--mute);margin-bottom:0.4rem">Edit question</div>
+        <textarea id="editText" rows="3" style="width:100%;font-family:'Inter',sans-serif;font-size:0.92rem;padding:0.6rem;border:1px solid var(--line2);border-radius:10px;background:var(--bg2);color:var(--ink);margin-bottom:0.5rem"></textarea>
+        <div style="display:flex;gap:0.5rem;flex-wrap:wrap">
+          <button id="editSave">Save</button>
+          <button class="ghost" id="editCancel">Cancel</button>
+          <button class="mark-wrong" id="editDelete" style="margin-left:auto">Delete</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- done -->
+    <div class="session-done hidden" id="sessionDone">
+      <div class="big">Session complete 🎉</div>
+      <div class="stats" id="doneStats"></div>
+      <button id="doneBtn">Back to topics</button>
+    </div>
+  </div>
+
+</div>
+
+<script>
+/* ================= Study System ================= */
+let db=null, currentSubject="Chemistry", mode="cloze";
+let allRows={cloze:[],cards:[]};       // everything for the subject
+let selected=new Set();                // selected "unit||aos||topic" keys
+let queue=[], qi=0;                     // study queue + index
+let sessionLimit="all";                 // how many questions this session
+let sessionStats={right:0,wrong:0,total:0};
+let phase="input";                     // input -> reveal -> mark  (cloze) ; question -> answer/mark (cards)
+let markArmed=false;                    // true only after a keyup, so the same Enter that
+                                        // submits can't also mark on the same press
+let pendingDelete=false;                // Ctrl+D shows confirm; Enter confirms, Esc cancels
+let hasDueColumn=true;                  // set false if the DB has no 'due' column yet
+let hasDpColumn=true;                   // set false if the DB has no 'dp' column yet
+let currentAnswers=[];                 // cloze answers for current card
+let clockT=null, clockS=0;
+
+const $=(id)=>document.getElementById(id);
+const keyOf=(r)=>`${r.unit||"Other"}||${r.aos||""}||${r.topic||"General"}`;
+
+function boot(){
+  const url=(typeof SUPABASE_URL!=="undefined")?SUPABASE_URL:"";
+  const anon=(typeof SUPABASE_ANON!=="undefined")?SUPABASE_ANON:"";
+  if(!url||url.startsWith("PASTE")||!anon||anon.startsWith("PASTE")){
+    $("home").classList.remove("hidden");$("configWarn").classList.remove("hidden");return;
+  }
+  db=window.supabase.createClient(url,anon);
+  wireAuth();wireHome();wireStudyKeys();
+  db.auth.getSession().then(({data})=>{data.session?enterApp(data.session.user):showAuth();});
+  db.auth.onAuthStateChange((_e,s)=>{s?enterApp(s.user):showAuth();});
+}
+function showAuth(){$("authScreen").classList.remove("hidden");$("home").classList.add("hidden");$("study").classList.add("hidden");}
+function enterApp(u){$("authScreen").classList.add("hidden");$("home").classList.remove("hidden");$("userEmail").textContent=u.email;loadAll();}
+function authMsg(t,k){const e=$("authMsg");e.textContent=t;e.className="msg show "+(k||"");}
+
+function wireAuth(){
+  $("signInBtn").onclick=async()=>{const email=$("email").value.trim(),password=$("password").value;
+    if(!email||!password)return authMsg("Enter your email and password.","err");
+    const{error}=await db.auth.signInWithPassword({email,password});if(error)authMsg(error.message,"err");};
+  $("signUpBtn").onclick=async()=>{const email=$("email").value.trim(),password=$("password").value;
+    if(!email||!password)return authMsg("Enter an email and password.","err");
+    if(password.length<6)return authMsg("Use at least 6 characters.","err");
+    const{error}=await db.auth.signUp({email,password});error?authMsg(error.message,"err"):authMsg("Account created. If confirmation is on, check your inbox — else sign in.","ok");};
+  $("password").addEventListener("keydown",e=>{if(e.key==="Enter")$("signInBtn").click();});
+}
+
+function wireHome(){
+  $("signOutBtn").onclick=()=>db.auth.signOut();
+  document.querySelectorAll("#modeSwitch button").forEach(b=>b.onclick=()=>setMode(b.dataset.mode));
+  $("clearSel").onclick=()=>{selected.clear();renderTree();updateStartBar();};
+  $("startBtn").onclick=startStudy;
+  document.querySelectorAll("#countPills .count-pill").forEach(b=>b.onclick=()=>{
+    sessionLimit=b.dataset.count;
+    document.querySelectorAll("#countPills .count-pill").forEach(x=>x.classList.toggle("active",x===b));
+  });
+  $("exitStudy").onclick=exitStudy;
+  $("doneBtn").onclick=exitStudy;
+  $("editBtn").onclick=openEdit;
+  $("editCancel").onclick=()=>$("editPanel").classList.add("hidden");
+  $("editSave").onclick=saveEdit;
+  $("editDelete").onclick=askDelete;
+  document.querySelectorAll("#tabs .tab:not(.disabled)").forEach(t=>t.onclick=()=>{
+    currentSubject=t.dataset.subject;
+    document.querySelectorAll("#tabs .tab").forEach(x=>x.classList.toggle("active",x===t));
+    applySubjectView();
+    loadAll();
+  });
+  $("addWlBtn").onclick=addWordlist;
+  $("gameExit").onclick=exitGame;
+  // English sub-mode: word game vs quotes
+  document.querySelectorAll("#engModeSwitch button").forEach(bn=>bn.onclick=()=>{
+    const m=bn.dataset.emode;
+    document.querySelectorAll("#engModeSwitch button").forEach(x=>x.classList.toggle("active",x===bn));
+    $("engGame").classList.toggle("hidden",m!=="game");
+    $("engQuotes").classList.toggle("hidden",m!=="quotes");
+  });
+  // quotes
+  $("qSave").onclick=saveQuote;
+  $("qCancelEdit").onclick=clearQuoteForm;
+  $("qAutoBlank").onclick=()=>{
+    const q=$("qQuote").value.trim();
+    if(!q)return $("qMsg").textContent="Add the quote first.";
+    $("qCloze").value=autoBlank(q);
+    $("qMsg").textContent="Blanks added — edit them if you like";
+  };
+  $("qQuote").addEventListener("blur",applySmartTags);
+  $("qThemeSel").onchange=()=>onTagPick("themes",$("qThemeSel"));
+  $("qCharSel").onchange=()=>onTagPick("characters",$("qCharSel"));
+  $("qActSel").onchange=()=>onTagPick("act",$("qActSel"));
+  refreshTagInputs();
+  $("qStudyBlanks").onclick=()=>startQuoteStudy("quote-cloze");
+  $("qStudyIdea").onclick=()=>startQuoteStudy("quote-idea");
+  $("qClearScope").onclick=()=>{tagValue=null;renderTagValues();renderTagQuotes();updateScopeLabel();};
+  document.querySelectorAll(".tag-type").forEach(b=>b.onclick=()=>{
+    tagType=(tagType===b.dataset.tt)?null:b.dataset.tt;
+    tagValue=null;
+    renderTagValues();renderTagQuotes();updateScopeLabel();
+  });
+  $("libraryBtn").onclick=openLibrary;
+  $("notesBtn").onclick=openNotes;
+  $("notesExit").onclick=()=>{ notesCurrent?showNotesBrowse():exitNotes(); };
+  $("modeRead").onclick=()=>setNotesMode("read");
+  $("modeEdit").onclick=()=>setNotesMode("edit");
+  $("libExit").onclick=()=>{ libCurrent?showLibBrowse():exitLibrary(); };
+  $("libAddBtn").onclick=libAddCard;
+  // word game input — space allowed so you can type multi-word phrases
+  $("gameInput").addEventListener("input",e=>onGameType(e.target.value));
+  // recall stage — type a word, press Enter to check against the whole list
+  $("recallInput").addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();submitRecallWord();}});
+  $("recallDone").onclick=finishRecall;
+}
+
+function applySubjectView(){
+  const eng=currentSubject==="English";
+  $("englishHome").classList.toggle("hidden",!eng);
+  $("clozeHome").classList.toggle("hidden",eng);
+  $("modeSwitch").classList.toggle("hidden",eng);
+  $("progressPanel").classList.toggle("hidden",eng);
+}
+
+async function loadAll(){
+  if(currentSubject==="English"){await loadPassages();return;}
+  const[c,f]=await Promise.all([
+    db.from("cloze").select("*").eq("subject",currentSubject),
+    db.from("flashcards").select("*").eq("subject",currentSubject),
+  ]);
+  allRows.cloze=c.data||[];allRows.cards=f.data||[];
+  // Detect whether the optional 'due' column exists so writes never fail.
+  if(allRows.cloze.length)hasDueColumn=Object.prototype.hasOwnProperty.call(allRows.cloze[0],"due");
+  selected.clear();renderTree();updateStartBar();renderProgress();
+}
+
+/* ---------- English word game data ---------- */
+let wordlists=[];
+async function loadPassages(){
+  const [wRes,qRes]=await Promise.all([
+    db.from("wordlists").select("*").order("created_at",{ascending:false}),
+    db.from("quotes").select("*").order("created_at",{ascending:false}),
+  ]);
+  wordlists=wRes.data||[];
+  quotes=(qRes&&qRes.data)||[];
+  renderWordlists();
+  renderTagValues();renderTagQuotes();updateScopeLabel();refreshTagInputs();
+}
+
+/* ================= QUOTES ================= */
+let quotes=[], tagType=null, tagValue=null, editingQuote=null;
+// current selections in the add/edit form
+let selThemes=[], selChars=[], selAct="";
+
+// Starting lists. Anything you add later is remembered automatically,
+// because the options are rebuilt from these plus whatever your quotes use.
+const TAG_DEFAULTS={
+  themes:["Love","Deception, disguise & performance","Gender & identity","Madness & wisdom","Class"],
+  characters:["Viola/Cesario","Orsino","Olivia","Malvolio","Feste","Sebastian","Antonio","Maria"],
+  act:["Act 1","Act 2","Act 3","Act 4","Act 5"],
+};
+const ADD_NEW="__add_new__";
+
+function splitTags(s){return (s||"").split(",").map(x=>x.trim()).filter(Boolean);}
+// every option for a tag type: the defaults, then any custom values already in use
+function optionsFor(tt){
+  const seen=new Map();
+  TAG_DEFAULTS[tt].forEach(v=>seen.set(v.toLowerCase(),v));
+  quotes.forEach(q=>{
+    const vals=tt==="act"?(q.act?[q.act]:[]):splitTags(tt==="themes"?q.themes:q.characters);
+    vals.forEach(v=>{const k=v.trim().toLowerCase();if(k&&!seen.has(k))seen.set(k,v.trim());});
+  });
+  return [...seen.values()];
+}
+function fillSelect(sel,tt,label){
+  const chosen=tt==="themes"?selThemes:(tt==="characters"?selChars:[]);
+  const opts=optionsFor(tt).filter(v=>tt==="act"||!chosen.some(c=>c.toLowerCase()===v.toLowerCase()));
+  sel.innerHTML=`<option value="">${label}</option>`
+    +opts.map(v=>`<option value="${escHtml(v)}">${escHtml(v)}</option>`).join("")
+    +`<option value="${ADD_NEW}">+ Add new…</option>`;
+  if(tt==="act")sel.value=selAct||"";
+}
+function renderChips(){
+  const draw=(box,arr,onRemove)=>{
+    box.innerHTML="";
+    arr.forEach((v,i)=>{
+      const el=document.createElement("span");el.className="sel-chip";
+      el.innerHTML=`${escHtml(v)} <span class="x">×</span>`;
+      el.querySelector(".x").onclick=()=>{onRemove(i);};
+      box.appendChild(el);
+    });
+  };
+  draw($("qThemeChips"),selThemes,i=>{selThemes.splice(i,1);refreshTagInputs();});
+  draw($("qCharChips"),selChars,i=>{selChars.splice(i,1);refreshTagInputs();});
+}
+function refreshTagInputs(){
+  fillSelect($("qThemeSel"),"themes","Add a theme…");
+  fillSelect($("qCharSel"),"characters","Add a character…");
+  fillSelect($("qActSel"),"act","Choose an act…");
+  renderChips();
+}
+function onTagPick(tt,sel){
+  let v=sel.value;
+  if(!v)return;
+  if(v===ADD_NEW){
+    const label=tt==="themes"?"theme":(tt==="characters"?"character":"act");
+    v=(prompt(`New ${label}:`)||"").trim();
+    if(!v){refreshTagInputs();return;}
+  }
+  if(tt==="act"){selAct=v;}
+  else{
+    const arr=tt==="themes"?selThemes:selChars;
+    if(!arr.some(x=>x.toLowerCase()===v.toLowerCase()))arr.push(v);
+  }
+  refreshTagInputs();
+}
+function quoteTagList(q,tt){
+  if(tt==="act")return q.act?[q.act.trim()]:[];
+  return splitTags(tt==="themes"?q.themes:q.characters);
+}
+// quotes currently in scope (all, or filtered by the chosen tag)
+function scopedQuotes(){
+  if(!tagType||!tagValue)return quotes;
+  return quotes.filter(q=>quoteTagList(q,tagType).some(v=>v.toLowerCase()===tagValue.toLowerCase()));
+}
+function updateScopeLabel(){
+  const n=scopedQuotes().length;
+  $("qScope").textContent=(tagValue?`${tagValue} · ${n}`:`all quotes · ${n}`);
+  $("qClearScope").classList.toggle("hidden",!tagValue);
+}
+function renderTagValues(){
+  const box=$("tagValues");if(!box)return;
+  document.querySelectorAll(".tag-type").forEach(b=>b.classList.toggle("active",b.dataset.tt===tagType));
+  box.innerHTML="";
+  if(!tagType){$("tagQuotes").innerHTML="";return;}
+  const counts={};
+  quotes.forEach(q=>quoteTagList(q,tagType).forEach(v=>{
+    const k=v.trim();if(!k)return;
+    const key=Object.keys(counts).find(x=>x.toLowerCase()===k.toLowerCase())||k;
+    counts[key]=(counts[key]||0)+1;
+  }));
+  const keys=Object.keys(counts).sort((a,b)=>a.localeCompare(b));
+  if(!keys.length){box.innerHTML='<div class="nc-empty">No quotes tagged with this yet.</div>';return;}
+  keys.forEach(k=>{
+    const el=document.createElement("div");
+    el.className="tag-val"+(tagValue&&tagValue.toLowerCase()===k.toLowerCase()?" active":"");
+    el.innerHTML=`${escHtml(k)} <span class="n">${counts[k]}</span>`;
+    el.onclick=()=>{
+      tagValue=(tagValue&&tagValue.toLowerCase()===k.toLowerCase())?null:k;
+      renderTagValues();renderTagQuotes();updateScopeLabel();
+    };
+    box.appendChild(el);
+  });
+}
+function renderTagQuotes(){
+  const box=$("tagQuotes");if(!box)return;
+  box.innerHTML="";
+  if(!tagType||!tagValue)return;
+  const list=scopedQuotes();
+  if(!list.length){box.innerHTML='<div class="nc-empty">No quotes here yet.</div>';return;}
+  list.forEach(q=>box.appendChild(quoteItemEl(q)));
+}
+function quoteItemEl(q){
+  const el=document.createElement("div");el.className="q-item";
+  const chips=[
+    ...splitTags(q.themes).map(t=>`<span class="q-chip">${escHtml(t)}</span>`),
+    ...splitTags(q.characters).map(t=>`<span class="q-chip ch-char">${escHtml(t)}</span>`),
+    ...(q.act?[`<span class="q-chip ch-act">${escHtml(q.act)}</span>`]:[]),
+  ].join("");
+  const missing=[];
+  if(!q.cloze)missing.push("no blanks version");
+  if(!q.idea)missing.push("no idea prompt");
+  el.innerHTML=`<div class="q-text">${escHtml(q.quote)}</div>
+    <div class="q-meta">${chips}
+      ${missing.length?`<span class="q-miss">${missing.join(" · ")}</span>`:""}
+      <span class="q-ops">
+        <button class="ghost small q-edit">Edit</button>
+        <button class="ghost small q-del" style="color:var(--miss)">Delete</button>
+      </span></div>`;
+  el.querySelector(".q-edit").onclick=()=>editQuote(q);
+  el.querySelector(".q-del").onclick=async()=>{
+    if(!confirm("Delete this quote permanently?"))return;
+    if(db)await db.from("quotes").delete().eq("id",q.id);
+    quotes=quotes.filter(x=>x.id!==q.id);
+    renderTagValues();renderTagQuotes();updateScopeLabel();
+  };
+  return el;
+}
+// auto-blank ~ every 3rd substantial word
+function autoBlank(text){
+  const words=text.split(/(\s+)/);
+  let n=0;
+  return words.map(w=>{
+    if(/^\s+$/.test(w)||w.length<4)return w;
+    n++;
+    if(n%3===0){
+      const m=w.match(/^([^\w]*)([\w'-]+)([^\w]*)$/);
+      if(m)return `${m[1]}[[${m[2]}]]${m[3]}`;
+    }
+    return w;
+  }).join("");
+}
+// smart tagging: if this quote already exists, reuse its tags
+function findExistingQuote(text){
+  const norm=s=>(s||"").toLowerCase().replace(/[^\w ]/g,"").replace(/\s+/g," ").trim();
+  const t=norm(text);
+  if(!t)return null;
+  return quotes.find(q=>{
+    const qt=norm(q.quote);
+    return qt===t||(t.length>15&&(qt.includes(t)||t.includes(qt)));
+  })||null;
+}
+function applySmartTags(){
+  if(editingQuote)return;                      // don't fight a manual edit
+  const match=findExistingQuote($("qQuote").value);
+  if(!match)return;
+  // only fill what the user has left empty
+  if(!selThemes.length&&match.themes)selThemes=splitTags(match.themes);
+  if(!selChars.length&&match.characters)selChars=splitTags(match.characters);
+  if(!selAct&&match.act)selAct=match.act;
+  if(!$("qCloze").value.trim()&&match.cloze)$("qCloze").value=match.cloze;
+  refreshTagInputs();
+  $("qMsg").textContent="Tags filled from the matching quote";
+}
+function clearQuoteForm(){
+  ["qQuote","qCloze","qIdea"].forEach(id=>$(id).value="");
+  selThemes=[];selChars=[];selAct="";refreshTagInputs();
+  editingQuote=null;
+  $("qFormTitle").textContent="Add a quote";
+  $("qSave").textContent="Save quote";
+  $("qCancelEdit").classList.add("hidden");
+}
+function editQuote(q){
+  editingQuote=q;
+  $("qQuote").value=q.quote||"";$("qCloze").value=q.cloze||"";$("qIdea").value=q.idea||"";
+  selThemes=splitTags(q.themes);selChars=splitTags(q.characters);selAct=q.act||"";
+  refreshTagInputs();
+  $("qFormTitle").textContent="Edit quote";
+  $("qSave").textContent="Update quote";
+  $("qCancelEdit").classList.remove("hidden");
+  $("qFormTitle").scrollIntoView({behavior:"smooth",block:"center"});
+}
+async function saveQuote(){
+  const quote=$("qQuote").value.trim();
+  if(!quote)return $("qMsg").textContent="Add the quote text first.";
+  const row={
+    quote,
+    cloze:$("qCloze").value.trim()||null,
+    idea:$("qIdea").value.trim()||null,
+    themes:selThemes.join(", ")||null,
+    characters:selChars.join(", ")||null,
+    act:selAct||null,
+  };
+  if(editingQuote){
+    Object.assign(editingQuote,row);
+    if(db){const{error}=await db.from("quotes").update(row).eq("id",editingQuote.id);
+      if(error)return $("qMsg").textContent="Error: "+error.message;}
+    $("qMsg").textContent="Updated ✓";
+  }else{
+    const {data:u}=await db.auth.getUser();
+    const ins={...row,user_id:u.user.id,subject:"English",work:"Twelfth Night",box:1,box_idea:1};
+    const {data:res,error}=await db.from("quotes").insert(ins).select();
+    if(error)return $("qMsg").textContent="Error: "+error.message;
+    quotes.unshift((res&&res[0])||{...ins,id:"tmp-"+Date.now()});
+    $("qMsg").textContent="Saved ✓";
+  }
+  clearQuoteForm();
+  renderTagValues();renderTagQuotes();updateScopeLabel();
+  setTimeout(()=>{$("qMsg").textContent="";},2500);
+}
+// start a quote session in either mode
+function startQuoteStudy(qmode){
+  const pool=scopedQuotes().filter(q=>qmode==="quote-idea"?q.idea:q.cloze);
+  if(!pool.length){
+    alert(qmode==="quote-idea"
+      ? "No quotes in this selection have an idea prompt yet."
+      : "No quotes in this selection have a fill-in-the-blank version yet.");
+    return;
+  }
+  mode=qmode;
+  const now=Date.now();
+  const boxOf=q=>qmode==="quote-idea"?(q.box_idea||1):(q.box||1);
+  const dueOf=q=>{const d=qmode==="quote-idea"?q.due_idea:q.due;return d?new Date(d).getTime():0;};
+  let rows=[...pool].sort((a,b)=>{
+    const aDue=dueOf(a)<=now,bDue=dueOf(b)<=now;
+    if(aDue!==bDue)return aDue?-1:1;
+    if(boxOf(a)!==boxOf(b))return boxOf(a)-boxOf(b);
+    return Math.random()-0.5;
+  });
+  if(sessionLimit!=="all")rows=rows.slice(0,parseInt(sessionLimit,10));
+  queue=rows;qi=0;
+  sessionStats={right:0,wrong:0,total:0};
+  $("home").classList.add("hidden");$("study").classList.remove("hidden");
+  $("sessionDone").classList.add("hidden");$("studyCard").classList.remove("hidden");
+  clockS=0;$("studyClock").textContent="00:00";clearInterval(clockT);
+  clockT=setInterval(()=>{clockS++;const m=String(Math.floor(clockS/60)).padStart(2,"0"),s=String(clockS%60).padStart(2,"0");$("studyClock").textContent=`${m}:${s}`;},1000);
+  renderStudy();
+}
+
+
+/* ---------- English word game ---------- */
+function renderWordlists(){
+  const box=$("wordlistList");box.innerHTML="";
+  if(!wordlists.length){box.innerHTML=`<div class="empty">No word lists yet. Add one below (e.g. tone words).</div>`;return;}
+  wordlists.forEach(wl=>{
+    const words=parseWords(wl.words);
+    const el=document.createElement("div");el.className="wl-item";
+    el.innerHTML=`<span class="wl-name">${(wl.name||"list").replace(/</g,"&lt;")}</span><span class="wl-count">${words.length} words · play →</span><button class="wl-del">del</button>`;
+    el.querySelector(".wl-name").onclick=()=>startGame(wl);
+    el.querySelector(".wl-count").onclick=()=>startGame(wl);
+    el.querySelector(".wl-del").onclick=async(e)=>{e.stopPropagation();if(db)await db.from("wordlists").delete().eq("id",wl.id);loadPassages();};
+    box.appendChild(el);
+  });
+}
+function parseWords(s){return (s||"").split(/[\n,]+/).map(w=>w.trim()).filter(Boolean);}
+async function addWordlist(){
+  const name=$("wlName").value.trim(), words=$("wlWords").value.trim();
+  if(!name||!words)return $("wlMsg").textContent="Add a name and some words.";
+  const {data:u}=await db.auth.getUser();
+  const {error}=await db.from("wordlists").insert({user_id:u.user.id,name,words});
+  if(error)return $("wlMsg").textContent="Error: "+error.message;
+  $("wlName").value="";$("wlWords").value="";$("wlMsg").textContent="Added ✓";
+  loadPassages();
+}
+
+let game={};
+function startGame(wl){
+  const words=parseWords(wl.words);
+  game={words,pool:[...words],active:[],lives:3,score:0,typed:"",raf:null,spawnT:null,over:false,cleared:[],listName:wl.name};
+  $("home").classList.add("hidden");$("game").classList.remove("hidden");
+  $("recallStage").classList.add("hidden");$("gameResults").classList.add("hidden");$("gameField").classList.remove("hidden");
+  // clear any old words
+  [...$("gameField").querySelectorAll(".falling-word")].forEach(e=>e.remove());
+  updateGameHud();
+  const inp=$("gameInput");inp.value="";inp.disabled=false;setTimeout(()=>inp.focus(),50);
+  // spawn a word every ~1.8s, speed scales slightly with score
+  spawnWord();
+  game.spawnT=setInterval(spawnWord,2600);
+  game.raf=requestAnimationFrame(gameTick);
+}
+function spawnWord(){
+  if(game.over)return;
+  if(!game.pool.length)game.pool=[...game.words]; // recycle
+  const word=game.pool.splice(Math.floor(Math.random()*game.pool.length),1)[0];
+  const field=$("gameField");
+  const el=document.createElement("div");el.className="falling-word";
+  el.dataset.word=word;el.dataset.done="0";
+  el.textContent=word;
+  const x=10+Math.random()*80; // percent
+  el.style.left=x+"%";el.style.top="-40px";
+  field.appendChild(el);
+  // Much slower base; ramps up gradually as score climbs (caps so it stays playable).
+  const speed=0.12+Math.min(0.45,game.score*0.012);
+  game.active.push({el,word,y:-40,speed});
+}
+function gameTick(){
+  if(game.over)return;
+  const field=$("gameField");const h=field.clientHeight-60; // bottom threshold (above input)
+  game.active.forEach(w=>{
+    w.y+=w.speed*2; // slower per-frame movement
+    w.el.style.top=w.y+"px";
+    if(w.y>=h && !w.hit){
+      w.hit=true;w.el.remove();
+      game.lives--;updateGameHud();
+      if(game.lives<=0){endGameStage1();}
+    }
+  });
+  game.active=game.active.filter(w=>!w.hit);
+  if(!game.over)game.raf=requestAnimationFrame(gameTick);
+}
+function updateGameHud(){
+  $("gameLives").textContent="❤️".repeat(Math.max(0,game.lives))+"🖤".repeat(Math.max(0,3-game.lives));
+  $("gameScore").textContent=game.score;
+}
+// typing: match against any active word. Space allowed (multi-word phrases).
+function onGameType(val){
+  if(game.over)return;
+  const v=val.trim().toLowerCase();
+  // highlight partial matches; clear a word on exact match
+  let matched=null;
+  game.active.forEach(w=>{
+    const target=w.word.toLowerCase();
+    w.el.classList.toggle("active", target.startsWith(v)&&v.length>0);
+    if(v===target)matched=w;
+  });
+  if(matched){
+    matched.hit=true;matched.el.remove();
+    game.active=game.active.filter(w=>w!==matched);
+    game.score++;game.cleared.push(matched.word);
+    updateGameHud();
+    $("gameInput").value="";
+  }
+}
+function endGameStage1(){
+  game.over=true;
+  clearInterval(game.spawnT);cancelAnimationFrame(game.raf);
+  $("gameInput").disabled=true;
+  // move to recall stage
+  $("gameField").classList.add("hidden");
+  $("recallStage").classList.remove("hidden");
+  $("recallInput").value="";$("recallFound").innerHTML="";
+  game.recallFound=new Set();               // words correctly recalled
+  game.recallAll=game.words.map(w=>w.toLowerCase()); // full list to check against
+  updateRecallCount();
+  let left=30;$("recallTimer").textContent="0:30";$("recallTimer").classList.remove("low");
+  setTimeout(()=>$("recallInput").focus(),50);
+  game.recallT=setInterval(()=>{
+    left--;
+    $("recallTimer").textContent="0:"+String(left).padStart(2,"0");
+    if(left<=10)$("recallTimer").classList.add("low");
+    if(left<=0){clearInterval(game.recallT);finishRecall();}
+  },1000);
+}
+function updateRecallCount(){
+  $("recallCount").textContent=`${game.recallFound.size} / ${game.words.length} recalled`;
+}
+// Called on Enter in the recall input: check the typed word against the WHOLE list.
+function submitRecallWord(){
+  const raw=$("recallInput").value.trim();
+  if(!raw)return;
+  const w=raw.toLowerCase();
+  $("recallInput").value="";
+  const idx=game.recallAll.indexOf(w);
+  if(idx!==-1 && !game.recallFound.has(w)){
+    game.recallFound.add(w);
+    const pill=document.createElement("span");pill.className="recall-hit";pill.textContent="✓ "+game.words[idx];
+    $("recallFound").appendChild(pill);
+    updateRecallCount();
+    if(game.recallFound.size===game.words.length){clearInterval(game.recallT);finishRecall();} // got them all
+  }else{
+    // brief shake feedback for wrong / already-found
+    $("recallInput").classList.remove("shake");void $("recallInput").offsetWidth;$("recallInput").classList.add("shake");
+  }
+}
+function finishRecall(){
+  clearInterval(game.recallT);
+  const found=game.recallFound||new Set();
+  const all=game.words;
+  $("recallStage").classList.add("hidden");
+  $("gameResults").classList.remove("hidden");
+  $("gameResultsBody").innerHTML=
+    `<div class="study-eyebrow">Game over · ${game.listName||""}</div>
+     <div style="text-align:center"><div class="big-stat" style="font-size:1.9rem;font-weight:650;color:var(--ink)">${game.score}</div>
+     <div class="sub" style="color:var(--mute);margin-bottom:1rem">words cleared in the game</div></div>
+     <div style="font-size:0.85rem;margin-bottom:0.5rem;color:var(--ink2)">Recall: <b style="color:var(--good)">${found.size}</b> / ${all.length} remembered</div>
+     <div style="line-height:1.9">${all.map(w=>found.has(w.toLowerCase())?`<span class="recall-hit">✓ ${w}</span>`:`<span class="recall-miss">· ${w}</span>`).join("<br>")}</div>
+     <div class="mark-row"><button id="gameAgain">Play again</button> <button class="ghost" id="gameBack">Back</button></div>`;
+  $("gameAgain").onclick=()=>{const wl=wordlists.find(w=>w.name===game.listName)||{words:game.words.join(","),name:game.listName};startGame(wl);};
+  $("gameBack").onclick=exitGame;
+}
+function exitGame(){
+  if(game.spawnT)clearInterval(game.spawnT);
+  if(game.raf)cancelAnimationFrame(game.raf);
+  if(game.recallT)clearInterval(game.recallT);
+  game.over=true;
+  $("game").classList.add("hidden");$("home").classList.remove("hidden");
+}
+
+
+
+function setMode(m){
+  mode=m;selected.clear();
+  document.querySelectorAll("#modeSwitch button").forEach(b=>b.classList.toggle("active",b.dataset.mode===m));
+  renderTree();updateStartBar();
+}
+function data(){return mode==="cloze"?allRows.cloze:allRows.cards;}
+
+function renderTree(){
+  const tree={};
+  data().forEach(r=>{const u=r.unit||"Other",a=r.aos||"",t=r.topic||"General";
+    tree[u]=tree[u]||{};tree[u][a]=tree[u][a]||{};tree[u][a][t]=tree[u][a][t]||[];tree[u][a][t].push(r);});
+  const box=$("navTree");box.innerHTML="";
+  if(!data().length){box.innerHTML=`<div class="empty"><div class="big">Nothing here yet.</div><div>Import your ${mode==="cloze"?"questions":"flashcards"} or add one below.</div></div>`;return;}
+  Object.keys(tree).sort().forEach(u=>{
+    Object.keys(tree[u]).sort().forEach(a=>{
+      const topics=tree[u][a];
+      const group=document.createElement("div");group.className="nav-group";
+      const head=document.createElement("div");head.className="nav-group-head";
+      const allKeys=Object.keys(topics).map(t=>`${u}||${a}||${t}`);
+      const allSel=allKeys.every(k=>selected.has(k));
+      head.innerHTML=`<span>${u}${a?" · "+a:""}</span><span class="aos-select">${allSel?"deselect all":"select all"}</span>`;
+      head.querySelector(".aos-select").onclick=(e)=>{e.stopPropagation();
+        if(allSel)allKeys.forEach(k=>selected.delete(k));else allKeys.forEach(k=>selected.add(k));
+        renderTree();updateStartBar();};
+      group.appendChild(head);
+      const chips=document.createElement("div");chips.className="topic-chips";
+      Object.keys(topics).sort().forEach(t=>{
+        const items=topics[t];const k=`${u}||${a}||${t}`;
+        const mastered=items.filter(x=>(x.box||1)>=4).length;
+        const chip=document.createElement("div");chip.className="topic-chip"+(selected.has(k)?" selected":"");
+        chip.innerHTML=`<span class="check">${selected.has(k)?"✓":""}</span>${t} <span class="count">${items.length}</span>`+
+          (mastered===items.length&&items.length?` <span class="mastered-pip"></span>`:"");
+        chip.onclick=()=>{selected.has(k)?selected.delete(k):selected.add(k);renderTree();updateStartBar();};
+        chips.appendChild(chip);
+      });
+      group.appendChild(chips);box.appendChild(group);
+    });
+  });
+}
+
+function selectedRows(){return data().filter(r=>selected.has(keyOf(r)));}function updateStartBar(){
+  const rows=selectedRows();
+  $("selCount").textContent=`${selected.size} topic${selected.size===1?"":"s"} · ${rows.length} ${mode==="cloze"?"questions":"cards"}`;
+  $("startBtn").disabled=rows.length===0;
+}
+
+/* ---------- spaced repetition ---------- */
+// Right: master faster (jump up, +2 from box>=2, else +1). Wrong: back to box 1 (due now).
+// due interval grows with box; wrong => due immediately (and requeued this session).
+const BOX_DAYS=[0,0,1,3,7,16]; // index by box 1..5
+function schedule(row,correct){
+  const old=row.box||1;let nb;
+  if(correct)nb=old>=2?Math.min(5,old+2):Math.min(5,old+1);
+  else nb=1;
+  const days=BOX_DAYS[nb]||0;
+  const due=new Date(Date.now()+days*24*3600*1000).toISOString();
+  const upd={box:nb,last_rating:correct?"good":"again",times_seen:(row.times_seen||0)+1,last_reviewed:new Date().toISOString()};
+  if(hasDueColumn)upd.due=due;
+  return upd;
+}
+
+function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+
+/* ---------- progress page (all subjects) ---------- */
+function dayKey(d){const x=new Date(d);return x.getFullYear()+"-"+String(x.getMonth()+1).padStart(2,"0")+"-"+String(x.getDate()).padStart(2,"0");}
+async function renderProgress(){
+  if(!db){return;}
+  // Pull every cloze row for the user across ALL subjects (RLS scopes to user).
+  // Select * so it works whether or not the optional 'due' column exists.
+  const {data,error}=await db.from("cloze").select("*");
+  if(error){$("progressBody").innerHTML=`<div class="empty">Couldn't load progress yet.</div>`;return;}
+  const rows=data||[];
+  const now=new Date(), todayKey=dayKey(now);
+  // group by subject
+  const subj={};
+  rows.forEach(r=>{const s=r.subject||"Other";(subj[s]=subj[s]||[]).push(r);});
+
+  // overall 7-day activity (all subjects combined for the bar chart)
+  const perDay={};
+  rows.forEach(r=>{if(r.last_reviewed){const k=dayKey(r.last_reviewed);perDay[k]=(perDay[k]||0)+1;}});
+  const days=[];for(let i=6;i>=0;i--){const d=new Date(now);d.setDate(d.getDate()-i);days.push(d);}
+  const counts=days.map(d=>perDay[dayKey(d)]||0);
+  const max=Math.max(1,...counts);
+  const dayName=d=>["Sun","Mon","Tue","Wed","Thu","Fri","Sat"][d.getDay()];
+
+  let html="";
+  // per-subject stat cards
+  const subjects=Object.keys(subj).sort();
+  if(!subjects.length){html=`<div class="empty">No questions yet. Add some to see progress.</div>`;$("progressBody").innerHTML=html;return;}
+  subjects.forEach(s=>{
+    const list=subj[s];
+    const today=list.filter(r=>r.last_reviewed&&dayKey(r.last_reviewed)===todayKey).length;
+    const mastered=list.filter(r=>(r.box||1)>=4).length;
+    const due=list.filter(r=>!r.due||new Date(r.due).getTime()<=now.getTime()).length;
+    html+=`<div style="font-weight:600;font-size:0.86rem;color:var(--ink);margin:0.7rem 0 0.4rem">${s}</div>
+    <div class="prog-today">
+      <div class="prog-stat"><div class="num">${today}</div><div class="lbl">today</div></div>
+      <div class="prog-stat"><div class="num">${mastered}</div><div class="lbl">mastered</div></div>
+      <div class="prog-stat"><div class="num">${due}</div><div class="lbl">due now</div></div>
+    </div>`;
+  });
+  // combined 7-day bars
+  html+=`<div style="font-size:0.77rem;color:var(--mute);margin:0.9rem 0 0.45rem">Last 7 days · all subjects</div><div class="prog-bars">`;
+  days.forEach((d,i)=>{
+    html+=`<div class="prog-day"><span class="day-lbl">${dayKey(d)===todayKey?"Today":dayName(d)}</span>
+      <span class="day-track"><span class="day-fill" style="width:${(counts[i]/max)*100}%"></span></span>
+      <span class="day-num">${counts[i]}</span></div>`;
+  });
+  html+=`</div>`;
+  $("progressBody").innerHTML=html;
+}
+
+function startStudy(){
+  // Order for spaced repetition: due-first (most overdue), then weakest box,
+  // then shuffle within that so it isn't identical each time.
+  let rows=[...selectedRows()];
+  const now=Date.now();
+  rows.sort((a,b)=>{
+    const ad=a.due?new Date(a.due).getTime():0, bd=b.due?new Date(b.due).getTime():0;
+    const aDue=ad<=now, bDue=bd<=now;
+    if(aDue!==bDue)return aDue?-1:1;         // due cards first
+    if((a.box||1)!==(b.box||1))return (a.box||1)-(b.box||1); // weaker first
+    return Math.random()-0.5;                 // shuffle within tier
+  });
+  if(sessionLimit!=="all")rows=rows.slice(0,parseInt(sessionLimit,10));
+  queue=rows;qi=0;
+  sessionStats={right:0,wrong:0,total:0};
+  $("home").classList.add("hidden");$("study").classList.remove("hidden");$("sessionDone").classList.add("hidden");$("studyCard").classList.remove("hidden");
+  clockS=0;$("studyClock").textContent="00:00";clearInterval(clockT);
+  clockT=setInterval(()=>{clockS++;const m=String(Math.floor(clockS/60)).padStart(2,"0"),s=String(clockS%60).padStart(2,"0");$("studyClock").textContent=`${m}:${s}`;},1000);
+  renderStudy();
+}
+function exitStudy(){clearInterval(clockT);$("study").classList.add("hidden");$("home").classList.remove("hidden");loadAll();}
+
+function fmtPips(box){let s=`<span class="box-pips"><span class="lbl">box</span>`;for(let i=1;i<=5;i++){const on=i<=box,m=box>=4;s+=`<span class="pip ${on?"on":""} ${on&&m?"mastered":""}"></span>`;}return s+`</span>`;}
+
+function updateProgress(){
+  $("studyCount").innerHTML=`${Math.min(qi+1,queue.length)} / ${queue.length}`;
+  $("progFill").style.width=`${(qi/queue.length)*100}%`;
+}
+
+function parseCloze(text){const parts=[],answers=[];const re=/\[\[(.*?)\]\]/g;let last=0,m;
+  while((m=re.exec(text))!==null){parts.push({type:"text",val:text.slice(last,m.index)});parts.push({type:"blank",idx:answers.length});answers.push(m[1].trim());last=re.lastIndex;}
+  parts.push({type:"text",val:text.slice(last)});return{parts,answers};}
+
+function renderStudy(){
+  if(qi>=queue.length)return finishSession();
+  updateProgress();
+  const row=queue[qi];
+  $("answerReveal").classList.add("hidden");$("markRow").classList.add("hidden");$("answerList").innerHTML="";
+  $("editPanel").classList.add("hidden");
+  $("deleteConfirm").classList.add("hidden");pendingDelete=false;
+  const isQuote=mode==="quote-cloze"||mode==="quote-idea";
+  if(isQuote){
+    const chips=[...splitTags(row.themes),...splitTags(row.characters),...(row.act?[row.act]:[])];
+    const boxNow=mode==="quote-idea"?(row.box_idea||1):(row.box||1);
+    $("studyEyebrow").innerHTML=`${escHtml(chips.join(" · "))||"Twelfth Night"} ${fmtPips(boxNow)}`;
+  }else{
+    $("studyEyebrow").innerHTML=`${[row.unit,row.aos,row.topic].filter(Boolean).join(" · ")} ${fmtPips(row.box||1)}`;
+  }
+
+  if(mode==="quote-idea"){
+    phase="input";
+    $("studyBody").innerHTML=`<div class="idea-lbl">From this idea, write the quote</div>
+      <div class="idea-prompt">${escHtml(row.idea||"")}</div>
+      <textarea class="idea-input" id="ideaInput" rows="3" placeholder="Type the quote..."></textarea>`;
+    $("kbdHint").innerHTML=`<span class="kbd">Enter</span> to check`;
+    const ta=$("ideaInput");
+    ta.addEventListener("keydown",e=>{
+      if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();submitIdea();}
+    });
+    setTimeout(()=>ta.focus(),40);
+    return;
+  }
+
+  if(mode==="cloze"||mode==="quote-cloze"){
+    phase="input";
+    const src=mode==="quote-cloze"?(row.cloze||""):row.text;
+    const{parts,answers}=parseCloze(src);currentAnswers=answers;
+    let html='<div class="cloze-text">';
+    parts.forEach(p=>{html+=p.type==="text"?p.val.replace(/\n/g,"<br>"):`<input class="blank-input" data-i="${p.idx}" autocomplete="off" spellcheck="false" size="${Math.max(6,(answers[p.idx]||'').length)}">`;});
+    html+='</div>';
+    $("studyBody").innerHTML=html;
+    $("kbdHint").innerHTML=`<span class="kbd">Enter</span> next blank · <span class="kbd">Enter</span> on last = submit`;
+    const inputs=[...$("studyBody").querySelectorAll(".blank-input")];
+    inputs.forEach((inp,i)=>inp.addEventListener("keydown",e=>{
+      if(e.key==="Enter"){e.preventDefault();if(i<inputs.length-1)inputs[i+1].focus();else submitCloze();}
+    }));
+    if(inputs[0])inputs[0].focus();
+  }else{
+    phase="question";
+    $("studyBody").innerHTML=`<div class="fc-side">Question</div><div class="fc-face">${row.question}</div>`;
+    $("kbdHint").innerHTML=`<span class="kbd">Enter</span> to reveal answer`;
+  }
+}
+
+function submitCloze(){
+  // colour blanks vs stored answer as a hint, then reveal + self-mark
+  const inputs=[...$("studyBody").querySelectorAll(".blank-input")];
+  const norm=s=>(s||"").trim().toLowerCase().replace(/\s+/g," ");
+  inputs.forEach(inp=>{const i=+inp.dataset.i;inp.classList.add(norm(inp.value)===norm(currentAnswers[i])?"correct":"wrong");inp.disabled=true;});
+  $("answerList").innerHTML=currentAnswers.map(a=>`<span class="answer-pill">${a}</span>`).join("");
+  $("answerReveal").classList.remove("hidden");
+  showMark();
+}
+function revealCard(){
+  const row=queue[qi];
+  $("studyBody").innerHTML=`<div class="fc-side">Answer</div><div class="fc-face">${row.answer}</div>`;
+  showMark();
+}
+function submitIdea(){
+  const row=queue[qi];
+  const ta=$("ideaInput");
+  const norm=s=>(s||"").toLowerCase().replace(/[^\w ]/g,"").replace(/\s+/g," ").trim();
+  const yours=ta.value, target=row.quote||"";
+  const close=norm(yours)===norm(target);
+  ta.disabled=true;
+  ta.style.borderColor=close?"var(--good)":"var(--line2)";
+  $("answerList").innerHTML="";
+  $("answerReveal").classList.add("hidden");
+  const box=document.createElement("div");
+  box.className="idea-answer";
+  box.innerHTML=`<div class="lbl" style="font-size:0.68rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--mute);margin-bottom:0.4rem">The quote</div>
+    <div class="full">${escHtml(target)}</div>`;
+  $("studyBody").appendChild(box);
+  showMark();
+}
+function showMark(){
+  phase="mark";
+  markArmed=false; // require a fresh key press before marking can fire
+  // move focus off any text input so the next Enter/Space is clean
+  if(document.activeElement&&document.activeElement.blur)document.activeElement.blur();
+  $("markRow").classList.remove("hidden");
+  $("kbdHint").innerHTML=`<span class="kbd">Enter</span> = got it · <span class="kbd">Space</span> = missed it`;
+}
+
+async function mark(correct){
+  const row=queue[qi];
+  sessionStats.total++;correct?sessionStats.right++:sessionStats.wrong++;
+  if(mode==="quote-cloze"||mode==="quote-idea"){
+    const idea=mode==="quote-idea";
+    const old=idea?(row.box_idea||1):(row.box||1);
+    const nb=correct?(old>=2?Math.min(5,old+2):Math.min(5,old+1)):1;
+    const days=BOX_DAYS[nb]||0;
+    const dueAt=new Date(Date.now()+days*24*3600*1000).toISOString();
+    const upd=idea?{box_idea:nb,due_idea:dueAt}:{box:nb,due:dueAt};
+    upd.times_seen=(row.times_seen||0)+1;
+    upd.last_reviewed=new Date().toISOString();
+    Object.assign(row,upd);
+    try{ db&&db.from("quotes").update(upd).eq("id",row.id); }catch(_){}
+  }else{
+    const upd=schedule(row,correct);
+    Object.assign(row,upd);
+    try{ db&&db.from(mode==="cloze"?"cloze":"flashcards").update(upd).eq("id",row.id); }catch(_){}
+  }
+  // wrong => requeue later this session
+  if(!correct){const clone={...row};queue.push(clone);}
+  qi++;
+  renderStudy();
+}
+
+function finishSession(){
+  clearInterval(clockT);
+  $("studyCard").classList.add("hidden");$("sessionDone").classList.remove("hidden");
+  $("progFill").style.width="100%";
+  const acc=sessionStats.total?Math.round(100*sessionStats.right/sessionStats.total):0;
+  const m=String(Math.floor(clockS/60)).padStart(2,"0"),s=String(clockS%60).padStart(2,"0");
+  $("doneStats").innerHTML=`${sessionStats.total} answered · ${sessionStats.right} right · ${sessionStats.wrong} missed · ${acc}% · ${m}:${s}`;
+}
+
+/* ---------- global keyboard for study ---------- */
+/* ---------- edit / delete current card ---------- */
+function openEdit(){
+  const row=queue[qi];if(!row)return;
+  $("editText").value=row.text;
+  $("editPanel").classList.remove("hidden");
+}
+async function saveEdit(){
+  const row=queue[qi];if(!row)return;
+  const text=$("editText").value.trim();
+  if(!text||!text.includes("[["))return alert("Keep at least one [[blank]].");
+  row.text=text;
+  if(db)await db.from("cloze").update({text}).eq("id",row.id);
+  $("editPanel").classList.add("hidden");
+  renderStudy(); // re-render with new text
+}
+async function deleteCard(){
+  const row=queue[qi];if(!row)return;
+  if(db)await db.from("cloze").delete().eq("id",row.id);
+  queue.splice(qi,1);
+  $("editPanel").classList.add("hidden");
+  $("deleteConfirm").classList.add("hidden");
+  pendingDelete=false;
+  if(qi>=queue.length)qi=Math.max(0,queue.length-1);
+  queue.length?renderStudy():finishSession();
+}
+function askDelete(){
+  if(!queue[qi])return;
+  pendingDelete=true;
+  $("deleteConfirm").classList.remove("hidden");
+}
+function cancelDelete(){
+  pendingDelete=false;
+  $("deleteConfirm").classList.add("hidden");
+}
+
+function wireStudyKeys(){
+  // Arm marking only after a key is released. This ensures the SAME Enter
+  // that submits a cloze cannot also mark it — you see the answer first,
+  // then a fresh Enter (right) or Space (wrong) marks it.
+  window.addEventListener("keyup",e=>{
+    const editing=!$("editPanel").classList.contains("hidden");
+    const inField=e.target&&(e.target.tagName==="TEXTAREA"||e.target.tagName==="INPUT");
+    if(editing&&inField)return;           // typing in the editor, not marking
+    if(phase==="mark") markArmed=true;
+  });
+
+  window.addEventListener("keydown",e=>{
+    if($("study").classList.contains("hidden"))return;
+    // If the edit panel is open and focus is in a text field, let ALL keys through
+    // (space, enter, etc.) so editing works normally. Esc closes the panel.
+    const editing=!$("editPanel").classList.contains("hidden");
+    const inField=e.target&&(e.target.tagName==="TEXTAREA"||e.target.tagName==="INPUT");
+    if(editing&&inField){
+      if(e.key==="Escape"){e.preventDefault();$("editPanel").classList.add("hidden");}
+      return; // never mark/delete/advance while editing
+    }
+    // If a delete is pending, Enter confirms and Esc cancels — nothing else.
+    if(pendingDelete){
+      if(e.key==="Enter"){e.preventDefault();deleteCard();}
+      else if(e.key==="Escape"){e.preventDefault();cancelDelete();}
+      return;
+    }
+    // Ctrl+D (or Cmd+D) = ask to delete the current card
+    if((e.ctrlKey||e.metaKey)&&(e.key==="d"||e.key==="D")){
+      e.preventDefault();
+      askDelete();
+      return;
+    }
+    // session-complete screen: Enter returns to topics
+    if(!$("sessionDone").classList.contains("hidden")){
+      if(e.key==="Enter"){e.preventDefault();exitStudy();}
+      return;
+    }
+    if(phase==="mark"){
+      // Space is intercepted only here (not while typing) so answers can
+      // contain spaces. Marking waits until markArmed (a fresh keypress).
+      if(e.key==="Enter"){
+        e.preventDefault();
+        if(markArmed) mark(true);
+      }else if(e.code==="Space"){
+        e.preventDefault();
+        if(markArmed) mark(false);
+      }
+    }else if(phase==="question"&&mode==="cards"){
+      if(e.key==="Enter"){e.preventDefault();revealCard();}
+    }
+    // cloze 'input' phase: Enter handled on the inputs; Space passes through.
+  });
+}
+
+/* ---------- NOTES ---------- */
+let allNotes=[], notesCurrent=null, notesMode="read";
+
+async function loadNotes(){
+  if(!db)return;
+  const {data,error}=await db.from("notes").select("*").eq("subject",currentSubject);
+  if(error){allNotes=[];return;}
+  allNotes=(data||[]).sort((a,b)=>(a.ord||0)-(b.ord||0));
+}
+async function openNotes(){
+  $("home").classList.add("hidden");
+  $("notes").classList.remove("hidden");
+  await loadNotes();
+  showNotesBrowse();
+}
+function exitNotes(){
+  $("notes").classList.add("hidden");
+  $("home").classList.remove("hidden");
+  loadAll();
+}
+function showNotesBrowse(){
+  notesCurrent=null;
+  $("notesBrowse").classList.remove("hidden");
+  $("notesTopic").classList.add("hidden");
+  $("notesCrumb").textContent=currentSubject;
+  renderNotesTree();
+}
+function renderNotesTree(){
+  const tree={};
+  allNotes.forEach(n=>{
+    const u=n.unit||"Other", a=n.aos||"", t=n.topic||"General";
+    tree[u]=tree[u]||{}; tree[u][a]=tree[u][a]||{}; tree[u][a][t]=(tree[u][a][t]||0)+1;
+  });
+  const box=$("notesTree"); box.innerHTML="";
+  if(!allNotes.length){box.innerHTML='<div class="empty"><div class="big">No notes yet.</div><div>Run the notes import in Supabase to load them.</div></div>';return;}
+  Object.keys(tree).sort().forEach(u=>{
+    Object.keys(tree[u]).sort().forEach(a=>{
+      const head=document.createElement("div");
+      head.className="nav-group-head";
+      head.innerHTML=`<span>${u}${a?" · "+a:""}</span>`;
+      box.appendChild(head);
+      Object.keys(tree[u][a]).sort().forEach(t=>{
+        const n=tree[u][a][t];
+        const el=document.createElement("div");
+        el.className="lib-topic";
+        el.innerHTML=`<span class="t-name">${t}</span><span class="t-count">${n} dot point${n===1?"":"s"}</span>`;
+        el.onclick=()=>openNotesTopic(u,a,t);
+        box.appendChild(el);
+      });
+    });
+  });
+}
+function openNotesTopic(unit,aos,topic){
+  notesCurrent={unit,aos,topic};
+  $("notesBrowse").classList.add("hidden");
+  $("notesTopic").classList.remove("hidden");
+  $("notesTopicName").textContent=topic;
+  $("notesTopicMeta").textContent=[unit,aos].filter(Boolean).join(" · ");
+  $("notesCrumb").textContent=`${currentSubject} · ${topic}`;
+  setNotesMode("read");
+  renderNotesSections();
+}
+function setNotesMode(m){
+  notesMode=m;
+  $("modeRead").classList.toggle("active",m==="read");
+  $("modeEdit").classList.toggle("active",m==="edit");
+  document.querySelectorAll("#notesSections .note-sec").forEach(sec=>{
+    sec.classList.toggle("editing",m==="edit");
+    const body=sec.querySelector(".note-body");
+    if(body)body.setAttribute("contenteditable",m==="edit"?"true":"false");
+  });
+}
+function notesRows(){
+  if(!notesCurrent)return [];
+  return allNotes.filter(n=>(n.unit||"Other")===notesCurrent.unit&&(n.aos||"")===notesCurrent.aos&&(n.topic||"General")===notesCurrent.topic);
+}
+function renderNotesSections(){
+  const box=$("notesSections"); box.innerHTML="";
+  notesRows().forEach((n,idx)=>{
+    const sec=document.createElement("div");
+    sec.className="note-sec"+(notesMode==="edit"?" editing":"");
+    sec.innerHTML=`
+      <div class="note-dp"><span class="dp-num">${idx+1}</span>${escHtml(n.dp||"")}</div>
+      <div class="note-toolbar">
+        <button data-cmd="bold" title="Bold"><b>B</b></button>
+        <button data-cmd="italic" title="Italic"><i>I</i></button>
+        <button data-cmd="underline" title="Underline"><u>U</u></button>
+        <span class="sep"></span>
+        <select data-size title="Text size">
+          <option value="">Size</option>
+          <option value="5">Large heading</option>
+          <option value="4">Heading</option>
+          <option value="3">Normal</option>
+          <option value="2">Small</option>
+        </select>
+        <span class="sep"></span>
+        <button data-cmd="insertUnorderedList" title="Bullet list">• List</button>
+        <button data-cmd="indent" title="Indent">→</button>
+        <button data-cmd="outdent" title="Outdent">←</button>
+        <span class="sep"></span>
+        <button data-cmd="removeFormat" title="Clear formatting">clear</button>
+      </div>
+      <div class="note-body" contenteditable="${notesMode==="edit"}">${n.body||""}</div>
+      <div class="note-save">
+        <button class="save-note">Save</button>
+        <button class="ghost small revert-note">Revert</button>
+        <span class="note-saved"></span>
+      </div>
+      <div class="note-cards">
+        <div class="note-cards-head"><span class="chev">▸</span><span class="nc-label"></span></div>
+        <div class="note-cards-body"></div>
+      </div>`;
+    const body=sec.querySelector(".note-body");
+    const original=n.body||"";
+    // toolbar
+    sec.querySelectorAll(".note-toolbar button[data-cmd]").forEach(b=>{
+      b.onmousedown=e=>e.preventDefault(); // keep selection
+      b.onclick=()=>{document.execCommand(b.dataset.cmd,false,null);body.focus();};
+    });
+    const sel=sec.querySelector("select[data-size]");
+    sel.onmousedown=e=>e.stopPropagation();
+    sel.onchange=()=>{if(sel.value){document.execCommand("fontSize",false,sel.value);sel.value="";body.focus();}};
+    // save / revert
+    sec.querySelector(".save-note").onclick=async()=>{
+      const html=body.innerHTML;
+      n.body=html;
+      if(db){const{error}=await db.from("notes").update({body:html}).eq("id",n.id);
+        sec.querySelector(".note-saved").textContent=error?("Error: "+error.message):"Saved ✓";}
+      else sec.querySelector(".note-saved").textContent="Saved ✓";
+      setTimeout(()=>{const s=sec.querySelector(".note-saved");if(s)s.textContent="";},2500);
+    };
+    sec.querySelector(".revert-note").onclick=()=>{body.innerHTML=original;};
+    // related cards
+    const wrap=sec.querySelector(".note-cards");
+    const head=sec.querySelector(".note-cards-head");
+    head.onclick=()=>wrap.classList.toggle("open");
+    renderNoteCards(sec,n);
+    box.appendChild(sec);
+  });
+
+  // unlinked cards for this topic, with fast bulk linking
+  const rest=document.createElement("div");
+  rest.className="note-sec";
+  rest.innerHTML=`<div class="note-dp"><span class="dp-num">·</span>Unlinked cards in this topic</div>
+    <div class="link-help">Click cards to select, then click a numbered button to file them under that dot point.</div>
+    <div class="link-bar" id="linkBar"></div>
+    <div class="note-cards open"><div class="note-cards-body" id="noteOtherCards"></div></div>`;
+  box.appendChild(rest);
+  renderUnlinked();
+}
+// cards whose dp matches this dot point
+function cardsForDp(dp){
+  if(!notesCurrent)return [];
+  return allRows.cloze.filter(c=>(c.topic||"General")===notesCurrent.topic&&(c.dp||"")===dp);
+}
+function renderNoteCards(sec,n){
+  const wrap=sec.querySelector(".note-cards");
+  const body=sec.querySelector(".note-cards-body");
+  const list=cardsForDp(n.dp);
+  sec.querySelector(".nc-label").textContent=`Cards · ${list.length}`;
+  body.innerHTML="";
+  if(!list.length){
+    const e=document.createElement("div");e.className="nc-empty";
+    e.textContent="No cards for this dot point yet — add one below.";
+    body.appendChild(e);
+  }
+  list.forEach(r=>body.appendChild(cardRowEl(r,()=>renderNoteCards(sec,n))));
+  // add: a clear button that opens the box, focused and ready
+  const addWrap=document.createElement("div");
+  addWrap.className="nc-addwrap";
+  addWrap.innerHTML=`<button class="nc-open">+ Add card</button>
+    <div class="add-form nc-form">
+      <textarea rows="2" placeholder="New card — mark blanks with [[double brackets]]"></textarea>
+      <button class="small nc-add">Add card</button>
+      <button class="ghost small nc-close">Cancel</button>
+      <span class="nc-msg" style="font-size:0.74rem;color:var(--good);margin-left:0.4rem"></span>
+    </div>`;
+  const form=addWrap.querySelector(".nc-form"), ta=addWrap.querySelector("textarea");
+  addWrap.querySelector(".nc-open").onclick=()=>{addWrap.classList.add("open");ta.focus();};
+  addWrap.querySelector(".nc-close").onclick=()=>{addWrap.classList.remove("open");ta.value="";};
+  const doAdd=async()=>{
+    const text=ta.value.trim();
+    const msg=addWrap.querySelector(".nc-msg");
+    if(!text||!text.includes("[["))return msg.textContent="Needs at least one [[blank]].";
+    const {data:u}=await db.auth.getUser();
+    const row={user_id:u.user.id,subject:currentSubject,unit:notesCurrent.unit,aos:notesCurrent.aos||null,
+               topic:notesCurrent.topic,text,box:1};
+    if(hasDpColumn)row.dp=n.dp;
+    if(hasDueColumn)row.due=new Date().toISOString();
+    let {data:ins,error}=await db.from("cloze").insert(row).select();
+    // retry without optional columns if the DB doesn't have them
+    if(error&&/column/i.test(error.message||"")){
+      hasDueColumn=false;delete row.due;
+      ({data:ins,error}=await db.from("cloze").insert(row).select());
+      if(error&&/column/i.test(error.message||"")){
+        hasDpColumn=false;delete row.dp;
+        ({data:ins,error}=await db.from("cloze").insert(row).select());
+      }
+    }
+    if(error)return msg.textContent="Error: "+error.message;
+    allRows.cloze.push((ins&&ins[0])||{...row,id:"tmp-"+Date.now()});
+    ta.value="";msg.textContent="Added ✓";
+    renderNoteCards(sec,n);
+    // keep the box open so several cards can be added in a row
+    const w=sec.querySelector(".nc-addwrap");
+    if(w){w.classList.add("open");w.querySelector("textarea").focus();
+      w.querySelector(".nc-msg").textContent="Added ✓";}
+  };
+  addWrap.querySelector(".nc-add").onclick=doAdd;
+  // Ctrl/Cmd+Enter adds without reaching for the mouse
+  ta.addEventListener("keydown",e=>{if((e.ctrlKey||e.metaKey)&&e.key==="Enter"){e.preventDefault();doAdd();}});
+  body.appendChild(addWrap);
+}
+/* --- unlinked cards + fast bulk linking --- */
+let linkSel=new Set();
+function unlinkedRows(){
+  const dps=new Set(notesRows().map(n=>n.dp));
+  return allRows.cloze.filter(c=>(c.topic||"General")===notesCurrent.topic&&!dps.has(c.dp||""));
+}
+function renderUnlinked(){
+  const box=$("noteOtherCards"), bar=$("linkBar");
+  if(!box)return;
+  const list=unlinkedRows();
+  // prune selections that no longer exist
+  [...linkSel].forEach(id=>{if(!list.some(c=>c.id===id))linkSel.delete(id);});
+  box.innerHTML="";
+  if(!list.length){
+    box.innerHTML='<div class="nc-empty">All cards in this topic are filed under a dot point. ✓</div>';
+    if(bar)bar.innerHTML="";return;
+  }
+  // selectable rows
+  list.forEach(r=>{
+    const el=document.createElement("div");
+    el.className="lib-card selectable"+(linkSel.has(r.id)?" sel":"");
+    el.innerHTML=`<div class="c-pick">${linkSel.has(r.id)?"✓":""}</div>
+      <div class="c-main">
+        <div class="c-text">${showBlanks(r.text)}</div>
+        <div class="c-actions">
+          <button class="ghost small lib-edit">Edit</button>
+          <button class="ghost small lib-del" style="color:var(--miss)">Delete</button>
+        </div>
+      </div>`;
+    // click anywhere (except buttons) toggles selection — fast
+    el.onclick=(e)=>{
+      if(e.target.closest("button")||e.target.tagName==="TEXTAREA")return;
+      linkSel.has(r.id)?linkSel.delete(r.id):linkSel.add(r.id);
+      renderUnlinked();
+    };
+    el.querySelector(".lib-edit").onclick=(e)=>{
+      e.stopPropagation();
+      const main=el.querySelector(".c-main");
+      main.innerHTML=`<textarea rows="4">${escHtml(r.text)}</textarea>
+        <div class="c-actions"><button class="lib-save">Save</button>
+        <button class="ghost small lib-cancel">Cancel</button></div>`;
+      const ta=main.querySelector("textarea");ta.focus();
+      main.querySelector(".lib-save").onclick=async(ev)=>{
+        ev.stopPropagation();
+        const text=ta.value.trim();
+        if(!text||!text.includes("[["))return alert("Keep at least one [[blank]].");
+        r.text=text;
+        if(db)await db.from("cloze").update({text}).eq("id",r.id);
+        renderUnlinked();
+      };
+      main.querySelector(".lib-cancel").onclick=(ev)=>{ev.stopPropagation();renderUnlinked();};
+    };
+    el.querySelector(".lib-del").onclick=async(e)=>{
+      e.stopPropagation();
+      if(!confirm("Delete this card permanently?"))return;
+      if(db)await db.from("cloze").delete().eq("id",r.id);
+      allRows.cloze=allRows.cloze.filter(x=>x.id!==r.id);
+      linkSel.delete(r.id);
+      renderUnlinked();
+    };
+    box.appendChild(el);
+  });
+  renderLinkBar(list);
+}
+function renderLinkBar(list){
+  const bar=$("linkBar");if(!bar)return;
+  const rows=notesRows();
+  const n=linkSel.size;
+  bar.innerHTML=`
+    <span class="link-count">${n} selected</span>
+    <button class="ghost small" id="linkAll">Select all</button>
+    <button class="ghost small" id="linkNone">Clear</button>
+    <span class="link-sep"></span>
+    <span class="link-to">File under →</span>
+    <span class="link-chips"></span>`;
+  const chips=bar.querySelector(".link-chips");
+  rows.forEach((note,i)=>{
+    const c=document.createElement("button");
+    c.className="link-chip";c.textContent=i+1;
+    c.title=note.dp||"";
+    c.disabled=n===0;
+    c.onclick=()=>linkSelectedTo(note.dp);
+    chips.appendChild(c);
+  });
+  bar.querySelector("#linkAll").onclick=()=>{list.forEach(r=>linkSel.add(r.id));renderUnlinked();};
+  bar.querySelector("#linkNone").onclick=()=>{linkSel.clear();renderUnlinked();};
+}
+async function linkSelectedTo(dp){
+  if(!linkSel.size)return;
+  const ids=[...linkSel];
+  // update locally first so the UI is instant
+  allRows.cloze.forEach(c=>{if(ids.includes(c.id))c.dp=dp;});
+  linkSel.clear();
+  if(db){
+    const {error}=await db.from("cloze").update({dp}).in("id",ids);
+    if(error){
+      alert("Couldn't save the link: "+error.message+
+        (/column/i.test(error.message||"")?"\n\nYour cloze table may need a 'dp' column. Run: alter table public.cloze add column if not exists dp text;":""));
+    }
+  }
+  renderNotesSections();   // refresh all sections + counts
+}
+// one editable card row, reused by notes + library
+function cardRowEl(r,refresh){
+  const el=document.createElement("div");el.className="lib-card";
+  el.innerHTML=`<div class="c-text">${showBlanks(r.text)}</div>
+    <div class="c-actions">
+      <button class="ghost small lib-unlink" title="Remove from this dot point">Unlink</button>
+      <button class="ghost small lib-edit">Edit</button>
+      <button class="ghost small lib-del" style="color:var(--miss)">Delete</button>
+    </div>`;
+  el.querySelector(".lib-edit").onclick=()=>{
+    el.innerHTML=`<textarea rows="4">${escHtml(r.text)}</textarea>
+      <div class="c-actions"><button class="lib-save">Save</button>
+      <button class="ghost small lib-cancel">Cancel</button></div>`;
+    const ta=el.querySelector("textarea");ta.focus();
+    el.querySelector(".lib-save").onclick=async()=>{
+      const text=ta.value.trim();
+      if(!text||!text.includes("[["))return alert("Keep at least one [[blank]].");
+      r.text=text;
+      if(db)await db.from("cloze").update({text}).eq("id",r.id);
+      refresh();
+    };
+    el.querySelector(".lib-cancel").onclick=refresh;
+  };
+  const ub=el.querySelector(".lib-unlink");
+  if(!r.dp) ub.style.display="none";     // nothing to unlink from
+  ub.onclick=async()=>{
+    r.dp=null;
+    if(db)await db.from("cloze").update({dp:null}).eq("id",r.id);
+    renderNotesSections();
+  };
+  el.querySelector(".lib-del").onclick=async()=>{
+    if(!confirm("Delete this card permanently?"))return;
+    if(db)await db.from("cloze").delete().eq("id",r.id);
+    allRows.cloze=allRows.cloze.filter(x=>x.id!==r.id);
+    refresh();
+  };
+  return el;
+}
+
+/* ---------- card library (browse / edit / add by topic) ---------- */
+let libCurrent=null;   // {unit,aos,topic}
+
+function openLibrary(){
+  $("home").classList.add("hidden");
+  $("library").classList.remove("hidden");
+  showLibBrowse();
+}
+function exitLibrary(){
+  $("library").classList.add("hidden");
+  $("home").classList.remove("hidden");
+  loadAll();
+}
+function showLibBrowse(){
+  libCurrent=null;
+  $("libBrowse").classList.remove("hidden");
+  $("libTopic").classList.add("hidden");
+  $("libCrumb").textContent=currentSubject;
+  renderLibTree();
+}
+function renderLibTree(){
+  const tree={};
+  allRows.cloze.forEach(r=>{
+    const u=r.unit||"Other", a=r.aos||"", t=r.topic||"General";
+    tree[u]=tree[u]||{}; tree[u][a]=tree[u][a]||{}; tree[u][a][t]=tree[u][a][t]||[];
+    tree[u][a][t].push(r);
+  });
+  const box=$("libTree"); box.innerHTML="";
+  if(!allRows.cloze.length){box.innerHTML='<div class="empty">No cards in this subject yet.</div>';return;}
+  Object.keys(tree).sort().forEach(u=>{
+    Object.keys(tree[u]).sort().forEach(a=>{
+      const head=document.createElement("div");
+      head.className="nav-group-head";
+      head.innerHTML=`<span>${u}${a?" · "+a:""}</span>`;
+      box.appendChild(head);
+      Object.keys(tree[u][a]).sort().forEach(t=>{
+        const items=tree[u][a][t];
+        const el=document.createElement("div");
+        el.className="lib-topic";
+        el.innerHTML=`<span class="t-name">${t}</span><span class="t-count">${items.length} card${items.length===1?"":"s"}</span>`;
+        el.onclick=()=>openLibTopic(u,a,t);
+        box.appendChild(el);
+      });
+    });
+  });
+}
+function openLibTopic(unit,aos,topic){
+  libCurrent={unit,aos,topic};
+  $("libBrowse").classList.add("hidden");
+  $("libTopic").classList.remove("hidden");
+  $("libTopicName").textContent=topic;
+  $("libTopicMeta").textContent=[unit,aos].filter(Boolean).join(" · ");
+  $("libCrumb").textContent=`${currentSubject} · ${topic}`;
+  $("libNewText").value="";$("libAddMsg").textContent="";
+  renderLibCards();
+}
+function escHtml(s){return (s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");}
+function showBlanks(s){
+  // render [[answer]] as a highlighted chip so it's easy to read
+  return escHtml(s).replace(/\[\[(.*?)\]\]/g,'<span class="bl">$1</span>');
+}
+function libRows(){
+  if(!libCurrent)return [];
+  return allRows.cloze.filter(r=>(r.unit||"Other")===libCurrent.unit&&(r.aos||"")===libCurrent.aos&&(r.topic||"General")===libCurrent.topic);
+}
+function renderLibCards(){
+  const box=$("libCards");box.innerHTML="";
+  const rows=libRows();
+  if(!rows.length){box.innerHTML='<div class="empty">No cards here yet — add one below.</div>';return;}
+  rows.forEach(r=>{
+    const el=document.createElement("div");el.className="lib-card";
+    el.innerHTML=`<div class="c-text">${showBlanks(r.text)}</div>
+      <div class="c-actions">
+        <button class="ghost small lib-edit">Edit</button>
+        <button class="ghost small lib-del" style="color:var(--miss)">Delete</button>
+      </div>`;
+    // edit
+    el.querySelector(".lib-edit").onclick=()=>{
+      el.innerHTML=`<textarea rows="4">${escHtml(r.text)}</textarea>
+        <div class="c-actions"><button class="lib-save">Save</button>
+        <button class="ghost small lib-cancel">Cancel</button></div>`;
+      const ta=el.querySelector("textarea");ta.focus();
+      el.querySelector(".lib-save").onclick=async()=>{
+        const text=ta.value.trim();
+        if(!text||!text.includes("[["))return alert("Keep at least one [[blank]].");
+        r.text=text;
+        if(db)await db.from("cloze").update({text}).eq("id",r.id);
+        renderLibCards();
+      };
+      el.querySelector(".lib-cancel").onclick=renderLibCards;
+    };
+    // delete
+    el.querySelector(".lib-del").onclick=async()=>{
+      if(!confirm("Delete this card permanently?"))return;
+      if(db)await db.from("cloze").delete().eq("id",r.id);
+      allRows.cloze=allRows.cloze.filter(x=>x.id!==r.id);
+      renderLibCards();
+    };
+    box.appendChild(el);
+  });
+}
+async function libAddCard(){
+  const text=$("libNewText").value.trim();
+  if(!text||!text.includes("[["))return $("libAddMsg").textContent="Add a sentence with at least one [[blank]].";
+  const {data:u}=await db.auth.getUser();
+  const row={user_id:u.user.id,subject:currentSubject,unit:libCurrent.unit,aos:libCurrent.aos||null,topic:libCurrent.topic,text,box:1};
+  if(hasDueColumn)row.due=new Date().toISOString();
+  let {data:ins,error}=await db.from("cloze").insert(row).select();
+  // If the DB doesn't have an optional column, drop it and retry once.
+  if(error&&/column/i.test(error.message||"")){
+    hasDueColumn=false;delete row.due;
+    ({data:ins,error}=await db.from("cloze").insert(row).select());
+  }
+  if(error)return $("libAddMsg").textContent="Error: "+error.message;
+  allRows.cloze.push((ins&&ins[0])||{...row,id:(ins&&ins[0]&&ins[0].id)||("tmp-"+Date.now())});
+  $("libNewText").value="";$("libAddMsg").textContent="Added ✓";
+  renderLibCards();
+}
+
+boot();
+</script>
+</body>
+</html>
